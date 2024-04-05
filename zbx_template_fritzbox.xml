@@ -27,6 +27,7 @@
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <inventory_link>VENDOR</inventory_link>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -47,6 +48,7 @@
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <inventory_link>MODEL</inventory_link>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -160,6 +162,14 @@
                     </master_item>
                 </item>
                 <item>
+                    <uuid>88fc5adbc07a48aeaab32745d690c563</uuid>
+                    <name>Downstream</name>
+                    <type>CALCULATED</type>
+                    <key>fritz.upnp.downstream</key>
+                    <units>B</units>
+                    <params>change(//fritzbox.upnp.totalbytesreceived)</params>
+                </item>
+                <item>
                     <uuid>5bfe846ac34c496a8e97d3b50187402d</uuid>
                     <name>Downstream max bit</name>
                     <type>DEPENDENT</type>
@@ -197,6 +207,14 @@
                     <master_item>
                         <key>fritzbox.upnp.linkproperties</key>
                     </master_item>
+                </item>
+                <item>
+                    <uuid>46ffd3633a2f4105bfac74ba6b18909f</uuid>
+                    <name>Upstream</name>
+                    <type>CALCULATED</type>
+                    <key>fritz.upnp.upstream</key>
+                    <units>B</units>
+                    <params>change(//fritzbox.upnp.totalbytessent)</params>
                 </item>
                 <item>
                     <uuid>9cd56b644810479e9cc5de35d457edea</uuid>
@@ -345,6 +363,14 @@
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <triggers>
+                        <trigger>
+                            <uuid>bad88a44b1b841aa863bf37193d6de25</uuid>
+                            <expression>changecount(/FritzBox UPNP/fritzbox.upnp.externalip,1)&gt;0</expression>
+                            <name>External address changed</name>
+                            <priority>AVERAGE</priority>
+                        </trigger>
+                    </triggers>
                 </item>
                 <item>
                     <uuid>116b910e1cb74e519bc414f629dd43f1</uuid>
@@ -540,4 +566,29 @@
             </macros>
         </template>
     </templates>
+    <graphs>
+        <graph>
+            <uuid>f621cdc7edea41e3a20b74ab4b6420ee</uuid>
+            <name>Up- / Downstream</name>
+            <graph_items>
+                <graph_item>
+                    <color>199C0D</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.upnp.downstream</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.upnp.upstream</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
 </zabbix_export>
