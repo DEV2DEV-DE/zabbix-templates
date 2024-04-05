@@ -1,4 +1,4 @@
 # zabbix-templates
 Templates for Zabbix
 
-**Contributions welcome!**
+# Contributions welcome!
