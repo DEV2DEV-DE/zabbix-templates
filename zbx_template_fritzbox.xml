@@ -20,6 +20,200 @@
             </groups>
             <items>
                 <item>
+                    <uuid>5305d07fcb3441b1aca49e820749a747</uuid>
+                    <name>Network devices</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.lua.devices</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+// Encode string as UTF-16LE
+function encodeStr(text) {
+var byteArray = new Uint8Array(text.length * 2);
+    for (var i = 0; i &lt; text.length; i++) {
+        byteArray[i*2] = text.charCodeAt(i) // &amp; 0xff;
+        byteArray[i*2+1] = text.charCodeAt(i) &gt;&gt; 8 // &amp; 0xff;
+    }
+    return byteArray;
+}
+
+// Get challenge from Fritz!Box
+var url = 'http://' + params.ip + '/login_sid.lua';
+const request = new HttpRequest();
+var response = request.get(url);
+
+// Calculate request parameters
+const challenge = XML.query(response, '/SessionInfo/Challenge/text()');
+const challengeStr = encodeStr(challenge + '-' + params.password);
+const challengeResponse = challenge + '-' + md5(challengeStr);
+
+// Get session id from Fritz!Box
+url = url + '?username=' + params.username + '&amp;response=' + challengeResponse;
+response = request.get(url);
+const sid = XML.query(response, '/SessionInfo/SID/text()');
+
+if (sid != '0000000000000000') {
+    // Retrieve data excerpt from Fritz!Box
+    // (name,ip,mac,UID,dhcp,wlan,ethernet,active,static_dhcp,manu_name,wakeup,deleteable,source,online,speed,wlan_UIDs,auto_wakeup,guest,url,wlan_station_type,vendorname,parentname,parentuid,ethernet_port,wlan_show_in_monitor,plc,ipv6_ifid,parental_control_abuse)
+    url = 'http://' + params.ip + '/query.lua?sid=' + sid + '&amp;network=landevice:settings/landevice/list(name,ip,mac,active,online,guest)';
+    response = request.get(url);
+
+    // Terminate Session as the number of active sessions is limited
+    // and a session expires after 20 minutes
+    url = 'http://' + params.ip + '/login_sid.lua?logout=1&amp;sid=' + sid;
+    request.get(url);
+
+    // Return the response
+    return JSON.stringify(JSON.parse(response));
+} else {
+    return 'Invalid SID';
+}</params>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>7443557dadd34aaa8ae652329b8fc103</uuid>
+                    <name>Network devices (active)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.active</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network[?(@.active==1)].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f2ec7258800942edabb6f95113e5d8e8</uuid>
+                    <name>Network devices (all)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.all</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network.length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5bdc68ee9ff24d62a5a047e2fc3af4f7</uuid>
+                    <name>Network devices (guest)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.guest</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network[?(@.guest==1)].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>6e429e5068eb48cfb934b29aa4383462</uuid>
+                    <name>Network devices (inactive)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.inactive</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network[?(@.active==0)].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c4d73e83e9644f49afd897c573704936</uuid>
+                    <name>Network devices (online)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.online</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network[?(@.online==1)].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>d2f5d4e098cd4acf9c45b9a12f2f1da7</uuid>
                     <name>Manufacturer</name>
                     <type>DEPENDENT</type>
@@ -62,6 +256,26 @@
                     </master_item>
                 </item>
                 <item>
+                    <uuid>049220eb2f894d7794ac99f1920bab84</uuid>
+                    <name>ProviderName</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.provider.name</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.BoxInfo.ProviderName</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritzbox.boxinfo</key>
+                    </master_item>
+                </item>
+                <item>
                     <uuid>0a56aa8eb2374b0f8af56e4c28bb35c2</uuid>
                     <name>System Version</name>
                     <type>DEPENDENT</type>
@@ -100,6 +314,12 @@
                     <master_item>
                         <key>fritzbox.upnp.linkproperties</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>72655bad5a2a4aeba63e3e8dddd2d1a7</uuid>
@@ -120,6 +340,12 @@
                     <master_item>
                         <key>fritzbox.upnp.statusinfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>8a70c79eeb9e497b92bb4614fbbc644e</uuid>
@@ -140,6 +366,12 @@
                     <master_item>
                         <key>fritzbox.upnp.statusinfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>715c91e4a96944bbb28cbc1bc80b2d46</uuid>
@@ -160,6 +392,12 @@
                     <master_item>
                         <key>fritzbox.upnp.connectiontypeinfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>88fc5adbc07a48aeaab32745d690c563</uuid>
@@ -168,6 +406,12 @@
                     <key>fritz.upnp.downstream</key>
                     <units>B</units>
                     <params>change(//fritzbox.upnp.totalbytesreceived)</params>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>5bfe846ac34c496a8e97d3b50187402d</uuid>
@@ -187,6 +431,12 @@
                     <master_item>
                         <key>fritzbox.upnp.linkproperties</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>472eaac8e93e425ea68db0dea61ab5bc</uuid>
@@ -207,6 +457,12 @@
                     <master_item>
                         <key>fritzbox.upnp.linkproperties</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>46ffd3633a2f4105bfac74ba6b18909f</uuid>
@@ -215,6 +471,12 @@
                     <key>fritz.upnp.upstream</key>
                     <units>B</units>
                     <params>change(//fritzbox.upnp.totalbytessent)</params>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>9cd56b644810479e9cc5de35d457edea</uuid>
@@ -234,6 +496,12 @@
                     <master_item>
                         <key>fritzbox.upnp.linkproperties</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>e35696f0701349a0b279205322dc9b9c</uuid>
@@ -253,6 +521,38 @@
                     <master_item>
                         <key>fritzbox.upnp.statusinfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>0ec53c12b15346508b35453f6f100832</uuid>
+                    <name>Boxinfo</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritzbox.boxinfo</key>
+                    <delay>1h</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>STR_REPLACE</type>
+                            <parameters>
+                                <parameter>q:</parameter>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}/juis_boxinfo.xml</url>
                 </item>
                 <item>
                     <uuid>2a547c31e876414880861d11fcd24b49</uuid>
@@ -292,7 +592,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANIPConn1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -307,14 +607,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>8aa884a62b5440438f63767f22c088ce</uuid>
@@ -340,7 +642,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANIPConn1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -355,14 +657,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                     <triggers>
                         <trigger>
                             <uuid>bad88a44b1b841aa863bf37193d6de25</uuid>
@@ -371,6 +675,42 @@
                             <priority>AVERAGE</priority>
                         </trigger>
                     </triggers>
+                </item>
+                <item>
+                    <uuid>645801a1720548989a8b61e68ed6f42b</uuid>
+                    <name>Host list</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritzbox.upnp.hostlist</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
+                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+    &lt;s:Body&gt;
+        &lt;u:GetStatusInfo xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot; /&gt;
+    &lt;/s:Body&gt;
+&lt;/s:Envelope&gt;</posts>
+                    <status_codes>200, 401</status_codes>
+                    <post_type>XML</post_type>
+                    <headers>
+                        <header>
+                            <name>SoapAction</name>
+                            <value>urn:dslforum-org:service:Hosts:1#X_AVM-DE_GetHostListPath</value>
+                        </header>
+                        <header>
+                            <name>Content-Type</name>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
+                        </header>
+                    </headers>
+                    <retrieve_mode>HEADERS</retrieve_mode>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>116b910e1cb74e519bc414f629dd43f1</uuid>
@@ -391,7 +731,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANCommonIFC1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wancommonifc1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -406,14 +746,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>2a39c9af6dc043728704bab94f7741ee</uuid>
@@ -434,7 +776,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANIPConn1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -449,14 +791,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>3ac92308dee8454eb20ca1478d501b3c</uuid>
@@ -481,7 +825,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANCommonIFC1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wancommonifc1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -496,14 +840,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>78763880312f45dcac95991be2fa258c</uuid>
@@ -528,7 +874,7 @@
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/WANCommonIFC1</url>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wancommonifc1</url>
                     <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
 &lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
     &lt;s:Body&gt;
@@ -543,14 +889,16 @@
                         </header>
                         <header>
                             <name>Content-Type</name>
-                            <value>text/xml</value>
-                        </header>
-                        <header>
-                            <name>charset</name>
-                            <value>utf-8</value>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
                         </header>
                     </headers>
                     <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
             </items>
             <macros>
