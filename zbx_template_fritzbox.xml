@@ -214,6 +214,79 @@ if (sid != '0000000000000000') {
                     </tags>
                 </item>
                 <item>
+                    <uuid>58fcfdb5525e44488763116cbde1dec7</uuid>
+                    <name>Eventlog</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.lua.eventlog</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+// Encode string as UTF-16LE
+function encodeStr(text) {
+var byteArray = new Uint8Array(text.length * 2);
+    for (var i = 0; i &lt; text.length; i++) {
+        byteArray[i*2] = text.charCodeAt(i) // &amp; 0xff;
+        byteArray[i*2+1] = text.charCodeAt(i) &gt;&gt; 8 // &amp; 0xff;
+    }
+    return byteArray;
+}
+
+// Get challenge from Fritz!Box
+var url = 'http://' + params.ip + '/login_sid.lua';
+const request = new HttpRequest();
+var response = request.get(url);
+
+// Calculate request parameters
+const challenge = XML.query(response, '/SessionInfo/Challenge/text()');
+const challengeStr = encodeStr(challenge + '-' + params.password);
+const challengeResponse = challenge + '-' + md5(challengeStr);
+
+// Get session id from Fritz!Box
+url = url + '?username=' + params.username + '&amp;response=' + challengeResponse;
+response = request.get(url);
+const sid = XML.query(response, '/SessionInfo/SID/text()');
+
+if (sid != '0000000000000000') {
+    // Retrieve data excerpt from Fritz!Box
+    url = 'http://' + params.ip + '/query.lua?sid=' + sid + '&amp;mq_log=logger:status/log';
+    response = request.get(url);
+
+    // Terminate Session as the number of active sessions is limited
+    // and a session expires after 20 minutes
+    url = 'http://' + params.ip + '/login_sid.lua?logout=1&amp;sid=' + sid;
+    request.get(url);
+
+    // Return the response
+    return JSON.stringify(JSON.parse(response));
+} else {
+    return 'Invalid SID';
+}</params>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>d2f5d4e098cd4acf9c45b9a12f2f1da7</uuid>
                     <name>Manufacturer</name>
                     <type>DEPENDENT</type>
@@ -233,6 +306,12 @@ if (sid != '0000000000000000') {
                     <master_item>
                         <key>fritzbox.systeminfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>22f21e68687241e08bdf9b950893d026</uuid>
@@ -254,6 +333,12 @@ if (sid != '0000000000000000') {
                     <master_item>
                         <key>fritzbox.systeminfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>049220eb2f894d7794ac99f1920bab84</uuid>
@@ -274,6 +359,12 @@ if (sid != '0000000000000000') {
                     <master_item>
                         <key>fritzbox.boxinfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>0a56aa8eb2374b0f8af56e4c28bb35c2</uuid>
@@ -294,6 +385,111 @@ if (sid != '0000000000000000') {
                     <master_item>
                         <key>fritzbox.systeminfo</key>
                     </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b88fc6a1526a4e5fb2d5da0575f4baef</uuid>
+                    <name>Number of ports forwarded</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.ports.forwarded</key>
+                    <delay>5m</delay>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(XML.query(response, 'number(//NewForwardNumberOfEntries/text())'));
+    }
+}</params>
+                    <description>Retrieves the number of forwarded ports of a Fritz!Box</description>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetForwardNumberOfEntries</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/layer3forwarding</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:Layer3Forwarding:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>5eeead30628041a19815f473e1f3d626</uuid>
@@ -553,6 +749,12 @@ if (sid != '0000000000000000') {
                         </step>
                     </preprocessing>
                     <url>http://{HOST.IP}/juis_boxinfo.xml</url>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>2a547c31e876414880861d11fcd24b49</uuid>
@@ -572,6 +774,12 @@ if (sid != '0000000000000000') {
                         </step>
                     </preprocessing>
                     <url>http://{HOST.IP}:49000/tr64desc.xml</url>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>xml</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>eacdac4f59d4454a9cf8f5a6e0db65b4</uuid>
@@ -675,6 +883,61 @@ if (sid != '0000000000000000') {
                             <priority>AVERAGE</priority>
                         </trigger>
                     </triggers>
+                </item>
+                <item>
+                    <uuid>e9c819ff39824fe99fcee367db688a5e</uuid>
+                    <name>Host number of entries</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritzbox.upnp.host.entries</key>
+                    <history>0</history>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetHostNumberOfEntriesResponse.NewHostNumberOfEntries</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
+                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;
+xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
+ &lt;s:Header&gt;
+ &lt;h:InitChallenge
+ xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot;
+ s:mustUnderstand=&quot;1&quot;&gt;
+ &lt;UserID&gt;{$FRITZ.USERNAME}&lt;/UserID&gt;
+ &lt;/h:InitChallenge &gt;
+ &lt;/s:Header&gt;
+ &lt;s:Body&gt;
+ &lt;u:GetHostNumberOfEntries xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot;&gt;
+ &lt;/u:GetHostNumberOfEntries&gt;
+ &lt;/s:Body&gt;
+&lt;/s:Envelope&gt;</posts>
+                    <post_type>XML</post_type>
+                    <headers>
+                        <header>
+                            <name>SoapAction</name>
+                            <value>urn:dslforum-org:service:Hosts:1#GetHostNumberOfEntries</value>
+                        </header>
+                        <header>
+                            <name>Content-Type</name>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
+                        </header>
+                    </headers>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>upnp</value>
+                        </tag>
+                    </tags>
                 </item>
                 <item>
                     <uuid>645801a1720548989a8b61e68ed6f42b</uuid>
@@ -915,6 +1178,48 @@ if (sid != '0000000000000000') {
         </template>
     </templates>
     <graphs>
+        <graph>
+            <uuid>f9790a03ba5d42debd53cae241cdacc8</uuid>
+            <name>Devices</name>
+            <type>STACKED</type>
+            <graph_items>
+                <graph_item>
+                    <color>F7941D</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.lua.devices.guest</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.lua.devices.inactive</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>199C0D</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.lua.devices.active</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>FritzBox UPNP</host>
+                        <key>fritz.lua.devices.online</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
         <graph>
             <uuid>f621cdc7edea41e3a20b74ab4b6420ee</uuid>
             <name>Up- / Downstream</name>
