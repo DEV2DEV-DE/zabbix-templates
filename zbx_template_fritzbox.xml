@@ -287,10 +287,312 @@ if (sid != '0000000000000000') {
                     </tags>
                 </item>
                 <item>
-                    <uuid>d2f5d4e098cd4acf9c45b9a12f2f1da7</uuid>
+                    <uuid>0664c79eb0724e919484300cd3a181e3</uuid>
+                    <name>External IP-Address</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064-appsetup.external-ip</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetAppRemoteInfoResponse.NewExternalIPAddress</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>bad88a44b1b841aa863bf37193d6de25</uuid>
+                            <expression>changecount(/FritzBox UPNP/fritz.tr-064-appsetup.external-ip,1)&gt;0</expression>
+                            <name>External address changed</name>
+                            <priority>AVERAGE</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <uuid>dc7dc1ef4f624d3bb9eeedf11ff5191f</uuid>
+                    <name>MyFritz enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064-appsetup.myfritz</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetAppRemoteInfoResponse.NewMyFritzEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5eeead30628041a19815f473e1f3d626</uuid>
+                    <name>Access type</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.accesstype</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewWANAccessType</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.linkproperties</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>121cdbb71e164feaa1bd409a840b49f4</uuid>
+                    <name>AppSetup-GetRemoteInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>VPN and remote access.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetAppRemoteInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/x_appsetup</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:X_AVM-DE_AppSetup:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>a48404155cca430bb7cae81acc3de695</uuid>
+                    <name>Device-GetInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.device.getinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Product- and device informations.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/deviceinfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:DeviceInfo:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>1ddf147a09ce48c487978eda402d3120</uuid>
                     <name>Manufacturer</name>
                     <type>DEPENDENT</type>
-                    <key>fritz.manufacturer</key>
+                    <key>fritz.tr-064.device.manufacturer</key>
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
@@ -299,25 +601,25 @@ if (sid != '0000000000000000') {
                         <step>
                             <type>JSONPATH</type>
                             <parameters>
-                                <parameter>$.root.device.manufacturer</parameter>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewManufacturerName</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritzbox.systeminfo</key>
+                        <key>fritz.tr-064.device.getinfo</key>
                     </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>xml</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
                 <item>
-                    <uuid>22f21e68687241e08bdf9b950893d026</uuid>
-                    <name>Model Name</name>
+                    <uuid>f6154054028948249f09ef4f00696e26</uuid>
+                    <name>Model name</name>
                     <type>DEPENDENT</type>
-                    <key>fritz.modelname</key>
+                    <key>fritz.tr-064.device.modelname</key>
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
@@ -326,25 +628,402 @@ if (sid != '0000000000000000') {
                         <step>
                             <type>JSONPATH</type>
                             <parameters>
-                                <parameter>$.root.device.modelName</parameter>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewModelName</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritzbox.systeminfo</key>
+                        <key>fritz.tr-064.device.getinfo</key>
                     </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>xml</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
                 <item>
-                    <uuid>049220eb2f894d7794ac99f1920bab84</uuid>
-                    <name>ProviderName</name>
+                    <uuid>4eda116fd0c3477ca4e5aa680bdfcbad</uuid>
+                    <name>Serial number</name>
                     <type>DEPENDENT</type>
-                    <key>fritz.provider.name</key>
+                    <key>fritz.tr-064.device.serialnumber</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <inventory_link>SERIALNO_A</inventory_link>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewSerialNumber</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.device.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b6a8dea46b29425583e3d10dc3adbb64</uuid>
+                    <name>Uptime</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.device.uptime</key>
+                    <delay>0</delay>
+                    <units>s</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewUpTime</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.device.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>0671ff82e3e54d3487db32d4fd6793a4</uuid>
+                    <name>Software version</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.device.version</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <inventory_link>SOFTWARE</inventory_link>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewSoftwareVersion</parameter>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const array = value.split('.');
+return array[1] + '.' + array[2];</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.device.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>88fc5adbc07a48aeaab32745d690c563</uuid>
+                    <name>Downstream</name>
+                    <type>CALCULATED</type>
+                    <key>fritz.tr-064.downstream</key>
+                    <units>B</units>
+                    <params>change(//fritz.tr-064.totalbytesreceived)</params>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5bfe846ac34c496a8e97d3b50187402d</uuid>
+                    <name>Downstream max bit</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.downstreammaxbit</key>
+                    <delay>0</delay>
+                    <units>b</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewLayer1DownstreamMaxBitRate</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.linkproperties</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>910d051d18ef4ef585ed426af05ecb62</uuid>
+                    <name>Ethernet link status</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.ethernetlinkconfig.status</key>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Ethernet-Linkstatus.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetEthernetLinkStatusResponse.NewEthernetLinkStatus</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetEthernetLinkStatus</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wanethlinkconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANEthernetLinkConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e9c819ff39824fe99fcee367db688a5e</uuid>
+                    <name>Host number of entries</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritz.tr-064.host.entries</key>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetHostNumberOfEntriesResponse.NewHostNumberOfEntries</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
+                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;
+xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
+ &lt;s:Header&gt;
+ &lt;h:InitChallenge
+ xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot;
+ s:mustUnderstand=&quot;1&quot;&gt;
+ &lt;UserID&gt;{$FRITZ.USERNAME}&lt;/UserID&gt;
+ &lt;/h:InitChallenge &gt;
+ &lt;/s:Header&gt;
+ &lt;s:Body&gt;
+ &lt;u:GetHostNumberOfEntries xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot;&gt;
+ &lt;/u:GetHostNumberOfEntries&gt;
+ &lt;/s:Body&gt;
+&lt;/s:Envelope&gt;</posts>
+                    <post_type>XML</post_type>
+                    <headers>
+                        <header>
+                            <name>SoapAction</name>
+                            <value>urn:dslforum-org:service:Hosts:1#GetHostNumberOfEntries</value>
+                        </header>
+                        <header>
+                            <name>Content-Type</name>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
+                        </header>
+                    </headers>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>645801a1720548989a8b61e68ed6f42b</uuid>
+                    <name>Host list</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritz.tr-064.hostlist</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
+                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+    &lt;s:Body&gt;
+        &lt;u:GetStatusInfo xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot; /&gt;
+    &lt;/s:Body&gt;
+&lt;/s:Envelope&gt;</posts>
+                    <status_codes>200, 401</status_codes>
+                    <post_type>XML</post_type>
+                    <headers>
+                        <header>
+                            <name>SoapAction</name>
+                            <value>urn:dslforum-org:service:Hosts:1#X_AVM-DE_GetHostListPath</value>
+                        </header>
+                        <header>
+                            <name>Content-Type</name>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
+                        </header>
+                    </headers>
+                    <retrieve_mode>HEADERS</retrieve_mode>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f2cd24a1fed54b33b5f1d81bffdacc9a</uuid>
+                    <name>DHCP configurable</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.lan.dhcpconfigurable</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewDHCPServerConfigurable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.lanconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>83ef98341e874a7da33428f1eaf3384e</uuid>
+                    <name>DHCP enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.lan.dhcpenabled</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewDHCPServerEnable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.lanconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>894e3b15a0664f85b7a3f59b7057d72c</uuid>
+                    <name>DNS server</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.lan.dnsserver</key>
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
@@ -352,25 +1031,179 @@ if (sid != '0000000000000000') {
                         <step>
                             <type>JSONPATH</type>
                             <parameters>
-                                <parameter>$.BoxInfo.ProviderName</parameter>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewDNSServers</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritzbox.boxinfo</key>
+                        <key>fritz.tr-064.lanconfig.getinfo</key>
                     </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>xml</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
                 <item>
-                    <uuid>0a56aa8eb2374b0f8af56e4c28bb35c2</uuid>
-                    <name>System Version</name>
+                    <uuid>35ac6235d4c245679a9af4fcd2995257</uuid>
+                    <name>LANConfig-GetInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.lanconfig.getinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>GetInfo about  LAN configurations.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/lanhostconfigmgm</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:LANHostConfigManagement:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>116b910e1cb74e519bc414f629dd43f1</uuid>
+                    <name>Link properties</name>
+                    <type>HTTP_AGENT</type>
+                    <key>fritz.tr-064.linkproperties</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <authtype>BASIC</authtype>
+                    <username>{$FRITZ.USERNAME}</username>
+                    <password>{$FRITZ.PASSWORD}</password>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}:49000/igdupnp/control/wancommonifc1</url>
+                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+    &lt;s:Body&gt;
+        &lt;u:GetCommonLinkProperties xmlns:u=&quot;urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1&quot; /&gt;
+    &lt;/s:Body&gt;
+&lt;/s:Envelope&gt;</posts>
+                    <post_type>XML</post_type>
+                    <headers>
+                        <header>
+                            <name>SoapAction</name>
+                            <value>urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1#GetCommonLinkProperties</value>
+                        </header>
+                        <header>
+                            <name>Content-Type</name>
+                            <value>text/xml; charset=&quot;utf-8&quot;</value>
+                        </header>
+                    </headers>
+                    <request_method>POST</request_method>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>472eaac8e93e425ea68db0dea61ab5bc</uuid>
+                    <name>Link status</name>
                     <type>DEPENDENT</type>
-                    <key>fritz.systemversion</key>
+                    <key>fritz.tr-064.linkstatus</key>
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
@@ -378,17 +1211,17 @@ if (sid != '0000000000000000') {
                         <step>
                             <type>JSONPATH</type>
                             <parameters>
-                                <parameter>$.root.systemVersion.Display</parameter>
+                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewPhysicalLinkStatus</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritzbox.systeminfo</key>
+                        <key>fritz.tr-064.linkproperties</key>
                     </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>xml</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
@@ -397,7 +1230,6 @@ if (sid != '0000000000000000') {
                     <name>Number of ports forwarded</name>
                     <type>SCRIPT</type>
                     <key>fritz.tr-064.ports.forwarded</key>
-                    <delay>5m</delay>
                     <params>const params = JSON.parse(value);
 
 var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
@@ -456,7 +1288,7 @@ if (statusCode != 200) {
         return(XML.query(response, 'number(//NewForwardNumberOfEntries/text())'));
     }
 }</params>
-                    <description>Retrieves the number of forwarded ports of a Fritz!Box</description>
+                    <description>Retrieves the number of forwarded ports.</description>
                     <timeout>30s</timeout>
                     <parameters>
                         <parameter>
@@ -490,502 +1322,106 @@ if (statusCode != 200) {
                             <value>TR-064</value>
                         </tag>
                     </tags>
-                </item>
-                <item>
-                    <uuid>5eeead30628041a19815f473e1f3d626</uuid>
-                    <name>Access type</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.accesstype</key>
-                    <delay>0</delay>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewWANAccessType</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.linkproperties</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>72655bad5a2a4aeba63e3e8dddd2d1a7</uuid>
-                    <name>Last connection error</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.connectionerror</key>
-                    <delay>0</delay>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetStatusInfoResponse.NewLastConnectionError</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.statusinfo</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>8a70c79eeb9e497b92bb4614fbbc644e</uuid>
-                    <name>Connection status</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.connectionstatus</key>
-                    <delay>0</delay>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetStatusInfoResponse.NewConnectionStatus</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.statusinfo</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>715c91e4a96944bbb28cbc1bc80b2d46</uuid>
-                    <name>Connection type</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.connectiontype</key>
-                    <delay>0</delay>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetConnectionTypeInfoResponse.NewConnectionType</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.connectiontypeinfo</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>88fc5adbc07a48aeaab32745d690c563</uuid>
-                    <name>Downstream</name>
-                    <type>CALCULATED</type>
-                    <key>fritz.upnp.downstream</key>
-                    <units>B</units>
-                    <params>change(//fritzbox.upnp.totalbytesreceived)</params>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>5bfe846ac34c496a8e97d3b50187402d</uuid>
-                    <name>Downstream max bit</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.downstreammaxbit</key>
-                    <delay>0</delay>
-                    <units>b</units>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewLayer1DownstreamMaxBitRate</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.linkproperties</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>472eaac8e93e425ea68db0dea61ab5bc</uuid>
-                    <name>Link status</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.linkstatus</key>
-                    <delay>0</delay>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewPhysicalLinkStatus</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.linkproperties</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>46ffd3633a2f4105bfac74ba6b18909f</uuid>
-                    <name>Upstream</name>
-                    <type>CALCULATED</type>
-                    <key>fritz.upnp.upstream</key>
-                    <units>B</units>
-                    <params>change(//fritzbox.upnp.totalbytessent)</params>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>9cd56b644810479e9cc5de35d457edea</uuid>
-                    <name>Upstream max bit</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.upstreammaxbit</key>
-                    <delay>0</delay>
-                    <units>b</units>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewLayer1UpstreamMaxBitRate</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.linkproperties</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>e35696f0701349a0b279205322dc9b9c</uuid>
-                    <name>Uptime</name>
-                    <type>DEPENDENT</type>
-                    <key>fritz.upnp.uptime</key>
-                    <delay>0</delay>
-                    <units>s</units>
-                    <preprocessing>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetStatusInfoResponse.NewUptime</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>fritzbox.upnp.statusinfo</key>
-                    </master_item>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>0ec53c12b15346508b35453f6f100832</uuid>
-                    <name>Boxinfo</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.boxinfo</key>
-                    <delay>1h</delay>
-                    <history>0</history>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>STR_REPLACE</type>
-                            <parameters>
-                                <parameter>q:</parameter>
-                                <parameter/>
-                            </parameters>
-                        </step>
-                        <step>
-                            <type>XML_TO_JSON</type>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <url>http://{HOST.IP}/juis_boxinfo.xml</url>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>xml</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>2a547c31e876414880861d11fcd24b49</uuid>
-                    <name>Systeminfo</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.systeminfo</key>
-                    <delay>1h</delay>
-                    <history>0</history>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <preprocessing>
-                        <step>
-                            <type>XML_TO_JSON</type>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <url>http://{HOST.IP}:49000/tr64desc.xml</url>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>xml</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>eacdac4f59d4454a9cf8f5a6e0db65b4</uuid>
-                    <name>Connection type info</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.connectiontypeinfo</key>
-                    <history>0</history>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <authtype>BASIC</authtype>
-                    <username>{$FRITZ.USERNAME}</username>
-                    <password>{$FRITZ.PASSWORD}</password>
-                    <preprocessing>
-                        <step>
-                            <type>XML_TO_JSON</type>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetStatusInfo xmlns:u=&quot;urn:schemas-upnp-org:service:WANIPConnection:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:schemas-upnp-org:service:WANIPConnection:1#GetConnectionTypeInfo</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <request_method>POST</request_method>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>8aa884a62b5440438f63767f22c088ce</uuid>
-                    <name>External IP-Address</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.externalip</key>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <authtype>BASIC</authtype>
-                    <username>{$FRITZ.USERNAME}</username>
-                    <password>{$FRITZ.PASSWORD}</password>
-                    <preprocessing>
-                        <step>
-                            <type>XML_TO_JSON</type>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </step>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetExternalIPAddressResponse.NewExternalIPAddress</parameter>
-                            </parameters>
-                        </step>
-                    </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetStatusInfo xmlns:u=&quot;urn:schemas-upnp-org:service:WANIPConnection:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <request_method>POST</request_method>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
                     <triggers>
                         <trigger>
-                            <uuid>bad88a44b1b841aa863bf37193d6de25</uuid>
-                            <expression>changecount(/FritzBox UPNP/fritzbox.upnp.externalip,1)&gt;0</expression>
-                            <name>External address changed</name>
-                            <priority>AVERAGE</priority>
+                            <uuid>bd2ef0b5aa654a87a57a5fff5ad2eb78</uuid>
+                            <expression>last(/FritzBox UPNP/fritz.tr-064.ports.forwarded)&gt;0</expression>
+                            <name>Number of ports forwarded</name>
+                            <priority>HIGH</priority>
                         </trigger>
                     </triggers>
                 </item>
                 <item>
-                    <uuid>e9c819ff39824fe99fcee367db688a5e</uuid>
-                    <name>Host number of entries</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.host.entries</key>
-                    <history>0</history>
+                    <uuid>e2f7c12671b74cfdabcb545783b7e610</uuid>
+                    <name>Enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.remoteaccess.enabled</key>
+                    <delay>0</delay>
                     <preprocessing>
-                        <step>
-                            <type>XML_TO_JSON</type>
-                            <parameters>
-                                <parameter/>
-                            </parameters>
-                        </step>
                         <step>
                             <type>JSONPATH</type>
                             <parameters>
-                                <parameter>$.Envelope.Body.GetHostNumberOfEntriesResponse.NewHostNumberOfEntries</parameter>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewEnabled</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;
-xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
- &lt;s:Header&gt;
- &lt;h:InitChallenge
- xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot;
- s:mustUnderstand=&quot;1&quot;&gt;
- &lt;UserID&gt;{$FRITZ.USERNAME}&lt;/UserID&gt;
- &lt;/h:InitChallenge &gt;
- &lt;/s:Header&gt;
- &lt;s:Body&gt;
- &lt;u:GetHostNumberOfEntries xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot;&gt;
- &lt;/u:GetHostNumberOfEntries&gt;
- &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:dslforum-org:service:Hosts:1#GetHostNumberOfEntries</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <request_method>POST</request_method>
+                    <master_item>
+                        <key>fritz.tr-064.remoteaccess.getinfo</key>
+                    </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>upnp</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
                 <item>
-                    <uuid>645801a1720548989a8b61e68ed6f42b</uuid>
-                    <name>Host list</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.hostlist</key>
+                    <uuid>f55893c9ad264f2b9f1b35c89c8446b5</uuid>
+                    <name>Remote access</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.remoteaccess.getinfo</key>
                     <history>0</history>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
-                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetStatusInfo xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <status_codes>200, 401</status_codes>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:dslforum-org:service:Hosts:1#X_AVM-DE_GetHostListPath</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <retrieve_mode>HEADERS</retrieve_mode>
-                    <request_method>POST</request_method>
-                    <tags>
-                        <tag>
-                            <tag>check</tag>
-                            <value>upnp</value>
-                        </tag>
-                    </tags>
-                </item>
-                <item>
-                    <uuid>116b910e1cb74e519bc414f629dd43f1</uuid>
-                    <name>Link properties</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.linkproperties</key>
-                    <history>0</history>
-                    <trends>0</trends>
-                    <value_type>TEXT</value_type>
-                    <authtype>BASIC</authtype>
-                    <username>{$FRITZ.USERNAME}</username>
-                    <password>{$FRITZ.PASSWORD}</password>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>DynDNS, remote servicing.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -994,43 +1430,251 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/wancommonifc1</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetCommonLinkProperties xmlns:u=&quot;urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1#GetCommonLinkProperties</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <request_method>POST</request_method>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/x_remote</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:X_AVM-DE_RemoteAccess:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>upnp</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
                 <item>
-                    <uuid>2a39c9af6dc043728704bab94f7741ee</uuid>
-                    <name>Status Info</name>
-                    <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.statusinfo</key>
+                    <uuid>d557450b8053471e917eb1b8c3712e45</uuid>
+                    <name>LetsEncrypt enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.remoteaccess.letsencrypt</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewLetsEncryptEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.remoteaccess.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e5ea7f9484314e5d89c3de56e41d8ca5</uuid>
+                    <name>Port</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.remoteaccess.port</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewPort</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.remoteaccess.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>dc23ca82611a41b3baf0a5b0759ac21c</uuid>
+                    <name>FTP enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.storage.ftpenabled</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewFTPEnable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.storage.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>080915ec651b4562a56827fdf846de75</uuid>
+                    <name>FTP WAN enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.storage.ftpwanenabled</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewFTPWANEnable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.storage.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>3cfaca932cb9453ba0720c0fbcf27e77</uuid>
+                    <name>FTP WAN Port</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.storage.ftpwanport</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewFTPWANPort</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.storage.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e68534a8fb64416db81c7066b54c4452</uuid>
+                    <name>FTP WAN SSL</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.storage.ftpwanssl</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewFTPWANSSLOnly</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.storage.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>d5a9436d3edc40e5b2eb3289d2f9bd4a</uuid>
+                    <name>Storage-GetInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.storage.getinfo</key>
                     <history>0</history>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
-                    <authtype>BASIC</authtype>
-                    <username>{$FRITZ.USERNAME}</username>
-                    <password>{$FRITZ.PASSWORD}</password>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Settings for SMB, FTP.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1039,29 +1683,61 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                             </parameters>
                         </step>
                     </preprocessing>
-                    <url>http://{HOST.IP}:49000/igdupnp/control/wanipconn1</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetStatusInfo xmlns:u=&quot;urn:schemas-upnp-org:service:WANIPConnection:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:schemas-upnp-org:service:WANIPConnection:1#GetStatusInfo</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <request_method>POST</request_method>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/x_storage</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:X_AVM-DE_Storage:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>upnp</value>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>7ed7d414f2ad4dd08a5a7b9f745f734e</uuid>
+                    <name>SMB enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.storage.smbenabled</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewSMBEnable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.storage.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
@@ -1069,7 +1745,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <uuid>3ac92308dee8454eb20ca1478d501b3c</uuid>
                     <name>Total bytes received</name>
                     <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.totalbytesreceived</key>
+                    <key>fritz.tr-064.totalbytesreceived</key>
                     <units>B</units>
                     <authtype>BASIC</authtype>
                     <username>{$FRITZ.USERNAME}</username>
@@ -1110,7 +1786,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>upnp</value>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
@@ -1118,7 +1794,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <uuid>78763880312f45dcac95991be2fa258c</uuid>
                     <name>Total bytes sent</name>
                     <type>HTTP_AGENT</type>
-                    <key>fritzbox.upnp.totalbytessent</key>
+                    <key>fritz.tr-064.totalbytessent</key>
                     <units>B</units>
                     <authtype>BASIC</authtype>
                     <username>{$FRITZ.USERNAME}</username>
@@ -1159,7 +1835,777 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <tags>
                         <tag>
                             <tag>check</tag>
-                            <value>upnp</value>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>46ffd3633a2f4105bfac74ba6b18909f</uuid>
+                    <name>Upstream</name>
+                    <type>CALCULATED</type>
+                    <key>fritz.tr-064.upstream</key>
+                    <units>B</units>
+                    <params>change(//fritz.tr-064.totalbytessent)</params>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>9cd56b644810479e9cc5de35d457edea</uuid>
+                    <name>Upstream max bit</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.upstreammaxbit</key>
+                    <delay>0</delay>
+                    <units>b</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetCommonLinkPropertiesResponse.NewLayer1UpstreamMaxBitRate</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.linkproperties</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5fd6be3615ca4a879c0338ddff8a214f</uuid>
+                    <name>Provider name</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wanciconfig.provider</key>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Active internet provider.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XMLPATH</type>
+                            <parameters>
+                                <parameter>//NewX_AVM-DE_Provider/text()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>X_AVM-DE_GetActiveProvider</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wancommonifconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANCommonInterfaceConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>901fbfae5df040569fab9a88a96f69d0</uuid>
+                    <name>WANDSLConfig-Diagnose</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wandslconfig.diagnose</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Get diagnose for DSL configuration.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>X_AVM-DE_GetDSLDiagnoseInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wandslifconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANDSLInterfaceConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>18b5046436de48ca9c49f45fb6431862</uuid>
+                    <name>WANDSLConfig-GetDStInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wandslconfig.getdslinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>GetDSLInfo from DSL configuration.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>X_AVM-DE_GetDSLInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wandslifconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANDSLInterfaceConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4950f20ebf634795b21b8b7d8e7a7f05</uuid>
+                    <name>WANDSLConfig-GetStatistics</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wandslconfig.getstatistics</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Get statistics from DSL configuration.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetStatisticsTotal</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wandslifconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANDSLInterfaceConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>72655bad5a2a4aeba63e3e8dddd2d1a7</uuid>
+                    <name>Last connection error</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.wanipconfig.connectionerror</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewLastConnectionError</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.wanipconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>8a70c79eeb9e497b92bb4614fbbc644e</uuid>
+                    <name>Connection status</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.wanipconfig.connectionstatus</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewConnectionStatus</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.wanipconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>715c91e4a96944bbb28cbc1bc80b2d46</uuid>
+                    <name>Connection type</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.wanipconfig.connectiontype</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewConnectionType</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.wanipconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>6eb7dfe795194061a9c5c29ac28d1192</uuid>
+                    <name>WANIPConfig-GetInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wanipconfig.getinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>GetInfo about  IP based WAN connections.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wanipconnection1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANIPConnection:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>a463da82f865435baf64c5c0f600a478</uuid>
+                    <name>WLANConfig-GetInfo</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wlanconfig.getinfo</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>GetInfo about  WLAN configurations.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetInfo</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wlanconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WLANConfiguration:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
                         </tag>
                     </tags>
                 </item>
@@ -1229,7 +2675,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <calc_fnc>ALL</calc_fnc>
                     <item>
                         <host>FritzBox UPNP</host>
-                        <key>fritz.upnp.downstream</key>
+                        <key>fritz.tr-064.downstream</key>
                     </item>
                 </graph_item>
                 <graph_item>
@@ -1238,7 +2684,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <calc_fnc>ALL</calc_fnc>
                     <item>
                         <host>FritzBox UPNP</host>
-                        <key>fritz.upnp.upstream</key>
+                        <key>fritz.tr-064.upstream</key>
                     </item>
                 </graph_item>
             </graph_items>
