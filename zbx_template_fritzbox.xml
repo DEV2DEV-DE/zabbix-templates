@@ -2142,7 +2142,7 @@ if (statusCode != 200) {
                 </item>
                 <item>
                     <uuid>18b5046436de48ca9c49f45fb6431862</uuid>
-                    <name>WANDSLConfig-GetDStInfo</name>
+                    <name>WANDSLConfig-GetDSLInfo</name>
                     <type>SCRIPT</type>
                     <key>fritz.tr-064.wandslconfig.getdslinfo</key>
                     <history>0</history>
