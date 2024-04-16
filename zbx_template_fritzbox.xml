@@ -768,10 +768,35 @@ return array[1] + '.' + array[2];</parameter>
                     </tags>
                 </item>
                 <item>
-                    <uuid>910d051d18ef4ef585ed426af05ecb62</uuid>
-                    <name>Ethernet link status</name>
+                    <uuid>775cbf2a9a7d4104a0b0320acb9c3ba2</uuid>
+                    <name>Enabled</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.ethconfig.enabled</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewEnable</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.ethconfig.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b301d939c38e4da49c9d96f3dd141b68</uuid>
+                    <name>EthernetConfig-GetInfo</name>
                     <type>SCRIPT</type>
-                    <key>fritz.tr-064.ethernetlinkconfig.status</key>
+                    <key>fritz.tr-064.ethconfig.getinfo</key>
+                    <history>0</history>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
                     <params>const params = JSON.parse(value);
@@ -832,7 +857,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>Ethernet-Linkstatus.</description>
+                    <description>GetInfo about  ethernet interface.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -840,18 +865,12 @@ if (statusCode != 200) {
                                 <parameter/>
                             </parameters>
                         </step>
-                        <step>
-                            <type>JSONPATH</type>
-                            <parameters>
-                                <parameter>$.Envelope.Body.GetEthernetLinkStatusResponse.NewEthernetLinkStatus</parameter>
-                            </parameters>
-                        </step>
                     </preprocessing>
                     <timeout>30s</timeout>
                     <parameters>
                         <parameter>
                             <name>action</name>
-                            <value>GetEthernetLinkStatus</value>
+                            <value>GetInfo</value>
                         </parameter>
                         <parameter>
                             <name>ip</name>
@@ -863,17 +882,43 @@ if (statusCode != 200) {
                         </parameter>
                         <parameter>
                             <name>url</name>
-                            <value>/upnp/control/wanethlinkconfig1</value>
+                            <value>/upnp/control/lanethernetifcfg</value>
                         </parameter>
                         <parameter>
                             <name>urn</name>
-                            <value>urn:dslforum-org:service:WANEthernetLinkConfig:1</value>
+                            <value>urn:dslforum-org:service:LANEthernetInterfaceConfig:1</value>
                         </parameter>
                         <parameter>
                             <name>username</name>
                             <value>{$FRITZ.USERNAME}</value>
                         </parameter>
                     </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f9355f2366b346d9a6f67f7366fedcd9</uuid>
+                    <name>Status</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.ethconfig.status</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewStatus</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.ethconfig.getinfo</key>
+                    </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
@@ -2300,6 +2345,120 @@ if (statusCode != 200) {
                         <parameter>
                             <name>urn</name>
                             <value>urn:dslforum-org:service:WANDSLInterfaceConfig:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>910d051d18ef4ef585ed426af05ecb62</uuid>
+                    <name>Ethernet link status</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.tr-064.wanethlinkconfig.status</key>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Ethernet-Linkstatus.</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetEthernetLinkStatusResponse.NewEthernetLinkStatus</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>GetEthernetLinkStatus</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/wanethlinkconfig1</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:WANEthernetLinkConfig:1</value>
                         </parameter>
                         <parameter>
                             <name>username</name>
