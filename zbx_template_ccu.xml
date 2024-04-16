@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>6.4</version>
+    <template_groups>
+        <template_group>
+            <uuid>a571c0d144b14fd4a87a9d9b2aa9fcd6</uuid>
+            <name>Templates/Applications</name>
+        </template_group>
+    </template_groups>
+    <templates>
+        <template>
+            <uuid>24238c3da6c74bd19afddfa185d5f38e</uuid>
+            <template>Homematic CCU</template>
+            <name>Homematic CCU</name>
+            <groups>
+                <group>
+                    <name>Templates/Applications</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>c6420e1cb33246e98676a889b3374668</uuid>
+                    <name>Carrier-Sense</name>
+                    <type>HTTP_AGENT</type>
+                    <key>ccu3.carriersense</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <preprocessing>
+                        <step>
+                            <type>XMLPATH</type>
+                            <parameters>
+                                <parameter>number(/state/datapoint/@value)</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}/addons/xmlapi/state.cgi?sid={$CCU.SID}&amp;datapoint_id=HmIP-RF.001F9D8997905D:0.CARRIER_SENSE_LEVEL</url>
+                </item>
+                <item>
+                    <uuid>7a6422d3131a484d829a1bbba072dcbf</uuid>
+                    <name>Duty-Cycle</name>
+                    <type>HTTP_AGENT</type>
+                    <key>ccu3.dutycycle</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <preprocessing>
+                        <step>
+                            <type>XMLPATH</type>
+                            <parameters>
+                                <parameter>number(/state/datapoint/@value)</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <url>http://{HOST.IP}/addons/xmlapi/state.cgi?sid={$CCU.SID}&amp;datapoint_id=HmIP-RF.001F9D8997905D:0.DUTY_CYCLE_LEVEL</url>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$CCU.SID}</macro>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
