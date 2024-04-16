@@ -57,8 +57,8 @@ const sid = XML.query(response, '/SessionInfo/SID/text()');
 
 if (sid != '0000000000000000') {
     // Retrieve data excerpt from Fritz!Box
-    // (name,ip,mac,UID,dhcp,wlan,ethernet,active,static_dhcp,manu_name,wakeup,deleteable,source,online,speed,wlan_UIDs,auto_wakeup,guest,url,wlan_station_type,vendorname,parentname,parentuid,ethernet_port,wlan_show_in_monitor,plc,ipv6_ifid,parental_control_abuse)
-    url = 'http://' + params.ip + '/query.lua?sid=' + sid + '&amp;network=landevice:settings/landevice/list(name,ip,mac,active,online,guest)';
+    // (name,ip,mac,UID,dhcp,wlan,ethernet,active,static_dhcp,manu_name,wakeup,deleteable,source,online,speed,wlan_UIDs,auto_wakeup,guest,url,wlan_station_type,vendorname,parentname,parentuid,ethernet_port,wlan_show_in_monitor,plc,ipv6_ifid,parental_control_abuse,blocked,firstused,lastused)
+    url = 'http://' + params.ip + '/query.lua?sid=' + sid + '&amp;network=landevice:settings/landevice/list(name,ip,mac,active,online,guest,blocked,firstused,lastused)';
     response = request.get(url);
 
     // Terminate Session as the number of active sessions is limited
@@ -128,6 +128,30 @@ if (sid != '0000000000000000') {
                             <type>JSONPATH</type>
                             <parameters>
                                 <parameter>$.network.length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.devices</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f8a43b8f91494d779022d968905a19d9</uuid>
+                    <name>Network devices (blocked)</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.devices.blocked</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.network[?(@.blocked==1)].length()</parameter>
                             </parameters>
                         </step>
                     </preprocessing>
