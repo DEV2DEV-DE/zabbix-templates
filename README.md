@@ -1,5 +1,5 @@
 # zabbix-templates
-Templates for Zabbix
+Templates for Zabbix (currently 6.4)
 
 ## Fritz!Box UPnP
 
