@@ -71,6 +71,7 @@ if (sid != '0000000000000000') {
 } else {
     return 'Invalid SID';
 }</params>
+                    <description>Retrieves a list of all network devices connected to the box.</description>
                     <timeout>30s</timeout>
                     <parameters>
                         <parameter>
@@ -99,6 +100,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.active</key>
                     <delay>0</delay>
+                    <description>Number of network devices actively connected to the box.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -123,6 +125,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.all</key>
                     <delay>0</delay>
+                    <description>Number of all network devices managed by the box.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -147,6 +150,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.blocked</key>
                     <delay>0</delay>
+                    <description>Number of network devices blocked by parental control.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -171,6 +175,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.guest</key>
                     <delay>0</delay>
+                    <description>Number of network devices connected to the guest network.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -195,6 +200,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.inactive</key>
                     <delay>0</delay>
+                    <description>Number of network devices that have been connected to the box in the past.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -219,6 +225,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.devices.online</key>
                     <delay>0</delay>
+                    <description>Number of network devices currently reachable by url.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -288,6 +295,7 @@ if (sid != '0000000000000000') {
 } else {
     return 'Invalid SID';
 }</params>
+                    <description>Eventlog of the box. Starting point for further processing.</description>
                     <timeout>30s</timeout>
                     <parameters>
                         <parameter>
@@ -318,6 +326,7 @@ if (sid != '0000000000000000') {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>IPv4 address of the box in the internet.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -327,7 +336,7 @@ if (sid != '0000000000000000') {
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                        <key>fritz.tr-064.appsetup.getremoteinfo</key>
                     </master_item>
                     <tags>
                         <tag>
@@ -350,6 +359,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064-appsetup.myfritz</key>
                     <delay>0</delay>
+                    <description>MyFritz service of the box enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -359,7 +369,7 @@ if (sid != '0000000000000000') {
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                        <key>fritz.tr-064.appsetup.getremoteinfo</key>
                     </master_item>
                     <tags>
                         <tag>
@@ -376,6 +386,7 @@ if (sid != '0000000000000000') {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Type of WAN access (DSL, Ethernet, X_AVM-DE_Fiber, X_AVMDE_UMTS, X_AVM-DE_Cable, X_AVM-DE_LTE).</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -398,7 +409,7 @@ if (sid != '0000000000000000') {
                     <uuid>121cdbb71e164feaa1bd409a840b49f4</uuid>
                     <name>AppSetup-GetRemoteInfo</name>
                     <type>SCRIPT</type>
-                    <key>fritz.tr-064.appsetup.geremotetinfo</key>
+                    <key>fritz.tr-064.appsetup.getremoteinfo</key>
                     <history>0</history>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
@@ -460,7 +471,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>VPN and remote access.</description>
+                    <description>Return information which is needed for apps to have access to the FRITZ!Box via WAN (VPN and remote access).</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -569,7 +580,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>Product- and device informations.</description>
+                    <description>Product- and device informations about the box itself.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -620,6 +631,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Name of the manufacturer (e.g. AVM).</description>
                     <inventory_link>VENDOR</inventory_link>
                     <preprocessing>
                         <step>
@@ -647,6 +659,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Model description of the box.</description>
                     <inventory_link>MODEL</inventory_link>
                     <preprocessing>
                         <step>
@@ -674,6 +687,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Serial number of the box.</description>
                     <inventory_link>SERIALNO_A</inventory_link>
                     <preprocessing>
                         <step>
@@ -694,12 +708,47 @@ if (statusCode != 200) {
                     </tags>
                 </item>
                 <item>
+                    <uuid>dc7f0668254940f8823d2880e71f151d</uuid>
+                    <name>Starttime</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.tr-064.device.starttime</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <description>Date/time of last start of the box.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body.GetInfoResponse.NewUpTime</parameter>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const start = new Date().getTime() - value*1000;
+return (new Date(start).toLocaleString());</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.tr-064.device.getinfo</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>TR-064</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>b6a8dea46b29425583e3d10dc3adbb64</uuid>
                     <name>Uptime</name>
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.device.uptime</key>
                     <delay>0</delay>
                     <units>s</units>
+                    <description>Seconds since last start of the box.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -726,6 +775,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Version number of the box' firmware.</description>
                     <inventory_link>SOFTWARE</inventory_link>
                     <preprocessing>
                         <step>
@@ -759,6 +809,7 @@ return array[1] + '.' + array[2];</parameter>
                     <key>fritz.tr-064.downstream</key>
                     <units>B</units>
                     <params>change(//fritz.tr-064.totalbytesreceived)</params>
+                    <description>Bytes read from the internet since last interval.</description>
                     <tags>
                         <tag>
                             <tag>check</tag>
@@ -773,6 +824,7 @@ return array[1] + '.' + array[2];</parameter>
                     <key>fritz.tr-064.downstreammaxbit</key>
                     <delay>0</delay>
                     <units>b</units>
+                    <description>Maximum possible download speed.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -797,6 +849,7 @@ return array[1] + '.' + array[2];</parameter>
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.ethconfig.enabled</key>
                     <delay>0</delay>
+                    <description>LAN connection enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -881,7 +934,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>GetInfo about  ethernet interface.</description>
+                    <description>Ethernet interface (LAN devices, WoL, Mesh).</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -932,6 +985,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Current status of the LAN connection.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -955,6 +1009,7 @@ if (statusCode != 200) {
                     <name>Host number of entries</name>
                     <type>HTTP_AGENT</type>
                     <key>fritz.tr-064.host.entries</key>
+                    <description>Number of hosts managed by the box (active &amp; inavtive).</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1007,32 +1062,112 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                 <item>
                     <uuid>645801a1720548989a8b61e68ed6f42b</uuid>
                     <name>Host list</name>
-                    <type>HTTP_AGENT</type>
+                    <type>SCRIPT</type>
                     <key>fritz.tr-064.hostlist</key>
                     <history>0</history>
                     <trends>0</trends>
+                    <status>DISABLED</status>
                     <value_type>TEXT</value_type>
-                    <url>http://{HOST.IP}:49000/upnp/control/hosts</url>
-                    <posts>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
-&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
-    &lt;s:Body&gt;
-        &lt;u:GetStatusInfo xmlns:u=&quot;urn:dslforum-org:service:Hosts:1&quot; /&gt;
-    &lt;/s:Body&gt;
-&lt;/s:Envelope&gt;</posts>
-                    <status_codes>200, 401</status_codes>
-                    <post_type>XML</post_type>
-                    <headers>
-                        <header>
-                            <name>SoapAction</name>
-                            <value>urn:dslforum-org:service:Hosts:1#X_AVM-DE_GetHostListPath</value>
-                        </header>
-                        <header>
-                            <name>Content-Type</name>
-                            <value>text/xml; charset=&quot;utf-8&quot;</value>
-                        </header>
-                    </headers>
-                    <retrieve_mode>HEADERS</retrieve_mode>
-                    <request_method>POST</request_method>
+                    <params>const params = JSON.parse(value);
+
+var requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+'&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+'    &lt;s:Header&gt;' +
+'        &lt;h:InitChallenge xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+'            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+'        &lt;/h:InitChallenge&gt;' +
+'    &lt;/s:Header&gt;' +
+'    &lt;s:Body&gt;' +
+'        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+'    &lt;/s:Body&gt;' +
+'&lt;/s:Envelope&gt;';
+
+const action = params.urn + '#' + params.action;
+
+// Initialize challenge with Fritz!Box
+var url = 'http://' + params.ip + ':49000' + params.url;
+const request = new HttpRequest();
+request.addHeader('Content-Type: text/xml; charset=&quot;utf-8&quot;');
+request.addHeader('User-Agent: AVM UPnP/1.0 Client 1.0');
+request.addHeader('SoapAction: ' + action);
+var response = request.post(url, requestBody);
+
+var statusCode = request.getStatus();
+if (statusCode != 200) {
+    throw 'Error ' + statusCode + ' initializing authentication!';
+} else {
+    // Calculate authentication
+    const nonce = XML.query(response, '//Nonce/text()');
+    const realm = XML.query(response, '//Realm/text()');
+    const secret = md5(params.username + ':' + realm + ':' + params.password);
+    const auth = md5(secret + ':' + nonce);
+
+    // Get values with authentication
+    requestBody = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;' +
+    '&lt;s:Envelope s:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot; xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;' +
+    '    &lt;s:Header&gt;' +
+    '        &lt;h:ClientAuth xmlns:h=&quot;http://soap-authentication.org/digest/2001/10/&quot; s:mustUnderstand=&quot;1&quot;&gt;' +
+    '            &lt;Nonce&gt;' + nonce + '&lt;/Nonce&gt;' +
+    '            &lt;Auth&gt;' + auth + '&lt;/Auth&gt;' +
+    '            &lt;UserID&gt;' + params.username + '&lt;/UserID&gt;' +
+    '            &lt;Realm&gt;' + realm + '&lt;/Realm&gt;' +
+    '        &lt;/h:ClientAuth&gt;' +
+    '    &lt;/s:Header&gt;' +
+    '    &lt;s:Body&gt;' +
+    '        &lt;u:' + params.action + ' xmlns:u=&quot;' + params.urn + '&quot; /&gt;' +
+    '    &lt;/s:Body&gt;' +
+    '&lt;/s:Envelope&gt;';
+
+    response = request.post(url, requestBody);
+    var statusCode = request.getStatus();
+    if (statusCode != 200) {
+        throw 'Error ' + statusCode + ' sending authenticated request!';
+    } else {
+        return(response);
+    }
+}</params>
+                    <description>Gets a path to a lua script file which generates an XML structured list of hosts.
+Disabled (probably deprecated).</description>
+                    <preprocessing>
+                        <step>
+                            <type>XML_TO_JSON</type>
+                            <parameters>
+                                <parameter/>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.Envelope.Body[&quot;X_AVM-DE_GetHostListPathResponse&quot;][&quot;NewX_AVM-DE_HostListPath&quot;]</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <parameters>
+                        <parameter>
+                            <name>action</name>
+                            <value>X_AVM-DE_GetHostListPath</value>
+                        </parameter>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>url</name>
+                            <value>/upnp/control/hosts</value>
+                        </parameter>
+                        <parameter>
+                            <name>urn</name>
+                            <value>urn:dslforum-org:service:Hosts:1</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
                     <tags>
                         <tag>
                             <tag>check</tag>
@@ -1046,6 +1181,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.lan.dhcpconfigurable</key>
                     <delay>0</delay>
+                    <description>LAN configuration: DHCP service is configurable,</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1070,6 +1206,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.lan.dhcpenabled</key>
                     <delay>0</delay>
+                    <description>LAN configuration: DHCP service is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1096,6 +1233,7 @@ xmlns:s=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; &gt;
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>LAN configuration: IP of the configured nameserver.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1180,7 +1318,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>GetInfo about  LAN configurations.</description>
+                    <description>LAN interface &amp; statistics.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1234,6 +1372,7 @@ if (statusCode != 200) {
                     <authtype>BASIC</authtype>
                     <username>{$FRITZ.USERNAME}</username>
                     <password>{$FRITZ.PASSWORD}</password>
+                    <description>Configuration of the ethernet WAN interface.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1276,6 +1415,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Current status of the ethernet WAN connection.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1406,6 +1546,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.remoteaccess.enabled</key>
                     <delay>0</delay>
+                    <description>Remote access to the box is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1539,6 +1680,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.remoteaccess.letsencrypt</key>
                     <delay>0</delay>
+                    <description>LetsEncrypt certificate service is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1563,6 +1705,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.remoteaccess.port</key>
                     <delay>0</delay>
+                    <description>Port number for remote access.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1587,6 +1730,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.storage.ftpenabled</key>
                     <delay>0</delay>
+                    <description>FTP service is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1611,6 +1755,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.storage.ftpwanenabled</key>
                     <delay>0</delay>
+                    <description>FTP service from WAN is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1635,6 +1780,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.storage.ftpwanport</key>
                     <delay>0</delay>
+                    <description>Port number for WAN FTP access.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1659,6 +1805,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.storage.ftpwanssl</key>
                     <delay>0</delay>
+                    <description>Encryption for FTP via WAN is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1792,6 +1939,7 @@ if (statusCode != 200) {
                     <type>DEPENDENT</type>
                     <key>fritz.tr-064.storage.smbenabled</key>
                     <delay>0</delay>
+                    <description>SMB service is enabled.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -1819,6 +1967,7 @@ if (statusCode != 200) {
                     <authtype>BASIC</authtype>
                     <username>{$FRITZ.USERNAME}</username>
                     <password>{$FRITZ.PASSWORD}</password>
+                    <description>Bytes received since last reset.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1868,6 +2017,7 @@ if (statusCode != 200) {
                     <authtype>BASIC</authtype>
                     <username>{$FRITZ.USERNAME}</username>
                     <password>{$FRITZ.PASSWORD}</password>
+                    <description>Bytes sent since last reset.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -1915,6 +2065,7 @@ if (statusCode != 200) {
                     <key>fritz.tr-064.upstream</key>
                     <units>B</units>
                     <params>change(//fritz.tr-064.totalbytessent)</params>
+                    <description>Bytes sent to the internet since last interval.</description>
                     <tags>
                         <tag>
                             <tag>check</tag>
@@ -1929,6 +2080,7 @@ if (statusCode != 200) {
                     <key>fritz.tr-064.upstreammaxbit</key>
                     <delay>0</delay>
                     <units>b</units>
+                    <description>Maximum possible upload speed.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -2012,7 +2164,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>Active internet provider.</description>
+                    <description>Friendly name of the active internet provider.</description>
                     <preprocessing>
                         <step>
                             <type>XMLPATH</type>
@@ -2447,7 +2599,7 @@ if (statusCode != 200) {
         return(response);
     }
 }</params>
-                    <description>Ethernet-Linkstatus.</description>
+                    <description>Status of the ethernet WAN access.</description>
                     <preprocessing>
                         <step>
                             <type>XML_TO_JSON</type>
@@ -2504,6 +2656,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Last error of the WAN connection.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -2530,6 +2683,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Current status of the WAN connection.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -2556,6 +2710,7 @@ if (statusCode != 200) {
                     <delay>0</delay>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
+                    <description>Type of the WAN connection.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
