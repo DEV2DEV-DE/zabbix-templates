@@ -20,7 +20,7 @@
             <items>
                 <item>
                     <uuid>8f46e3f600744a4f8dbbad011bf671f0</uuid>
-                    <name>AC-Activation</name>
+                    <name>AC-Activation OK</name>
                     <type>DEPENDENT</type>
                     <key>lupus.ac_activation_ok</key>
                     <delay>0</delay>
@@ -44,7 +44,7 @@
                 </item>
                 <item>
                     <uuid>fc98155bc4254fb2aaf148e509ce4109</uuid>
-                    <name>Battery</name>
+                    <name>Battery OK</name>
                     <type>DEPENDENT</type>
                     <key>lupus.battery_ok</key>
                     <delay>0</delay>
@@ -67,8 +67,28 @@
                     </tags>
                 </item>
                 <item>
+                    <uuid>63280ae9a36041afb6a78b79f79ca73c</uuid>
+                    <name>Device list</name>
+                    <type>HTTP_AGENT</type>
+                    <key>lupus.device-list</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <authtype>BASIC</authtype>
+                    <username>{$LUPUS.USERNAME}</username>
+                    <password>{$LUPUS.PASSWORD}</password>
+                    <url>http://{HOST.IP}/action/deviceListGet</url>
+                    <output_format>JSON</output_format>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Status</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>f7537d24126e48d88013aceee701db37</uuid>
-                    <name>GSM</name>
+                    <name>GSM OK</name>
                     <type>DEPENDENT</type>
                     <key>lupus.gsm_ok</key>
                     <delay>0</delay>
@@ -92,7 +112,7 @@
                 </item>
                 <item>
                     <uuid>a50790152a2f480c877c73314b7aae11</uuid>
-                    <name>Interference</name>
+                    <name>Interference OK</name>
                     <type>DEPENDENT</type>
                     <key>lupus.interference_ok</key>
                     <delay>0</delay>
@@ -184,7 +204,7 @@
                 </item>
                 <item>
                     <uuid>a7cfcf6ec4904bdcab8d401ad1414ff0</uuid>
-                    <name>Tamper</name>
+                    <name>Tamper OK</name>
                     <type>DEPENDENT</type>
                     <key>lupus.tamper_ok</key>
                     <delay>0</delay>
