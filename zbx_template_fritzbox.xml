@@ -245,6 +245,256 @@ if (sid != '0000000000000000') {
                     </tags>
                 </item>
                 <item>
+                    <uuid>3a2c44f8d1ec4bd8b21338748c9807dd</uuid>
+                    <name>Energy</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.lua.energy</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+// Encode string as UTF-16LE
+function encodeStr(text) {
+var byteArray = new Uint8Array(text.length * 2);
+    for (var i = 0; i &lt; text.length; i++) {
+        byteArray[i*2] = text.charCodeAt(i) // &amp; 0xff;
+        byteArray[i*2+1] = text.charCodeAt(i) &gt;&gt; 8 // &amp; 0xff;
+    }
+    return byteArray;
+}
+
+// Get challenge from Fritz!Box
+var url = 'http://' + params.ip + '/login_sid.lua';
+const request = new HttpRequest();
+var response = request.get(url);
+
+// Calculate request parameters
+const challenge = XML.query(response, '/SessionInfo/Challenge/text()');
+const challengeStr = encodeStr(challenge + '-' + params.password);
+const challengeResponse = challenge + '-' + md5(challengeStr);
+
+// Get session id from Fritz!Box
+url = url + '?username=' + params.username + '&amp;response=' + challengeResponse;
+response = request.get(url);
+const sid = XML.query(response, '/SessionInfo/SID/text()');
+
+if (sid != '0000000000000000') {
+    // Retrieve data excerpt from Fritz!Box
+    url = 'http://' + params.ip + '/data.lua';
+    const body = 'sid=' + sid + '&amp;page=energy';
+    request.addHeader('Content-Type: application/x-www-form-urlencoded');
+    request.addHeader('Content-Length: ' + body.length.toString());
+    response = request.post(url, body);
+
+    // Terminate Session as the number of active sessions is limited
+    // and a session expires after 20 minutes
+    url = 'http://' + params.ip + '/login_sid.lua?logout=1&amp;sid=' + sid;
+    request.get(url);
+
+    // Return the response
+    return (response);
+} else {
+    return 'Invalid SID';
+}</params>
+                    <description>Retrieves energy consumption of the box for additional processing.</description>
+                    <timeout>10s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>8298c356613748b9a909172487d80c9a</uuid>
+                    <name>CPU utilization</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.cpu</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current CPU utilization.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('Haupt')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b4df9680c0184fd7bc161925a4a928b0</uuid>
+                    <name>DSL</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.dsl</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current energy consumption for DSL.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('DSL')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>717da61fd1e34d5a80e7860af7cede86</uuid>
+                    <name>Fon</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.fon</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current energy consumption for analog phones.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('FON')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b0263b6db573404e8d0688a85207c692</uuid>
+                    <name>Overall</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.overall</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current energy consumption of the system.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('Gesamt')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4bb94c1a883f43bb91c935c8b0c887b2</uuid>
+                    <name>USB</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.usb</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current energy consumption for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('USB')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>14512206dfe441f89af51b9f66f2d75f</uuid>
+                    <name>WLAN</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.energy.wlan</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Current energy consumption for Wifi.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const drain = JSON.parse(value).data.drain;
+for (var key in drain) {
+    if (drain[key].name.includes('WLAN')) return drain[key].actPerc;
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.energy</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>58fcfdb5525e44488763116cbde1dec7</uuid>
                     <name>Eventlog</name>
                     <type>SCRIPT</type>
@@ -311,6 +561,141 @@ if (sid != '0000000000000000') {
                             <value>{$FRITZ.USERNAME}</value>
                         </parameter>
                     </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>2dbc2e9a265643ba9dfc83232167ddb3</uuid>
+                    <name>Statistic</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.lua.statistic</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+// Encode string as UTF-16LE
+function encodeStr(text) {
+var byteArray = new Uint8Array(text.length * 2);
+    for (var i = 0; i &lt; text.length; i++) {
+        byteArray[i*2] = text.charCodeAt(i) // &amp; 0xff;
+        byteArray[i*2+1] = text.charCodeAt(i) &gt;&gt; 8 // &amp; 0xff;
+    }
+    return byteArray;
+}
+
+// Get challenge from Fritz!Box
+var url = 'http://' + params.ip + '/login_sid.lua';
+const request = new HttpRequest();
+var response = request.get(url);
+
+// Calculate request parameters
+const challenge = XML.query(response, '/SessionInfo/Challenge/text()');
+const challengeStr = encodeStr(challenge + '-' + params.password);
+const challengeResponse = challenge + '-' + md5(challengeStr);
+
+// Get session id from Fritz!Box
+url = url + '?username=' + params.username + '&amp;response=' + challengeResponse;
+response = request.get(url);
+const sid = XML.query(response, '/SessionInfo/SID/text()');
+
+if (sid != '0000000000000000') {
+    // Retrieve data excerpt from Fritz!Box
+    url = 'http://' + params.ip + '/data.lua';
+    const body = 'sid=' + sid + '&amp;page=ecoStat';
+    request.addHeader('Content-Type: application/x-www-form-urlencoded');
+    request.addHeader('Content-Length: ' + body.length.toString());
+    response = request.post(url, body);
+
+    // Terminate Session as the number of active sessions is limited
+    // and a session expires after 20 minutes
+    url = 'http://' + params.ip + '/login_sid.lua?logout=1&amp;sid=' + sid;
+    request.get(url);
+
+    // Return the response
+    return (response);
+} else {
+    return 'Invalid SID';
+}</params>
+                    <description>Retrieves energy statistics of the box for additional processing.</description>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>1c05c1577270476d865120b5f0f8614c</uuid>
+                    <name>Memory utilization</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.statistic.memory</key>
+                    <delay>0</delay>
+                    <units>%</units>
+                    <description>Memory utilization.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const mem= JSON.parse(value).data.ramusage.series[2];
+for (var i = mem.length-1; i &gt;= 0; i--) {
+    if (mem[i] &gt; 0) return 100-mem[i];
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.statistic</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>10b3222e9e184f1b81551bf09b535a39</uuid>
+                    <name>CPU temperature</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.statistic.temperature</key>
+                    <delay>0</delay>
+                    <units>°C</units>
+                    <description>Latest temperature of the CPU.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const temp = JSON.parse(value).data.cputemp.series[0];
+for (var i = temp.length-1; i &gt;= 0; i--) {
+    if (temp[i] &gt; 0) return temp[i];
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.statistic</key>
+                    </master_item>
                     <tags>
                         <tag>
                             <tag>check</tag>
