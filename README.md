@@ -14,7 +14,7 @@ Set macro ``{$FRITZ.USERNAME}`` and ``{$FRITZ.PASSWORD}`` and enter valid creden
 Set the appropriate permissions for the user.
 
 > [!Note]
-> Interface documentation: https://avm.de/service/schnittstellen
+> Interface documentation (german): https://avm.de/service/schnittstellen
 
 > [!Tip]
 > I recommend to use a specific user for monitoring.
