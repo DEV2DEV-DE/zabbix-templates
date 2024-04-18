@@ -4,6 +4,7 @@ Templates for Zabbix (currently 6.4)
 ![](https://img.shields.io/static/v1?label=&message=AVM%20Fritz!Box&color=maroon)
 ![](https://img.shields.io/static/v1?label=&message=Lupussec%20XT&color=darkorange)
 ![](https://img.shields.io/static/v1?label=&message=Homematic%20CCU&color=navy)
+![](https://img.shields.io/static/v1?label=&message=Tasmota&color=dodgerblue)
 
 ${\textsf{\color{orange}Contributions welcome!}}$
 
@@ -41,3 +42,7 @@ Tested with Lupus XT2-Plus.
 Set macro ``{$CCU.SID}`` and enter a valid security token.
 
 Tested with CCU3.
+
+## ${\textsf{\color{blue}Tasmota}}$
+
+Tested with smart plug Nous A1T.
