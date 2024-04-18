@@ -14,7 +14,8 @@ Set the appropriate permissions for the user.
 
 > [!Tip]
 > I recommend to use a specific user for monitoring.
-> 
+
+> [!Caution]
 > You should only enable the items you really need to not raise CPU utilization.
 
 Tested with FB7430 and FB7590.
