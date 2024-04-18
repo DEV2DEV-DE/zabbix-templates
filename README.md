@@ -13,7 +13,11 @@ Tested with FB7430 and FB7590.
 
 ### Links
 
-Interface documentation: https://avm.de/service/schnittstellen/#c9644
+Interface documentation: https://avm.de/service/schnittstellen
+
+### Notes
+
+You should only enable the items you really need to not raise CPU utilization.
 
 ## Lupussec XT alarm central
 
