@@ -126,6 +126,89 @@ if (sid != '0000000000000000') {
                     </tags>
                 </item>
                 <item>
+                    <uuid>4292f62fdebc49f9b0434355f2d50533</uuid>
+                    <name>Devices</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.dect.devices</key>
+                    <delay>0</delay>
+                    <description>Number of DECT devices connected.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.devices[?(@.name!='')].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.dect</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>63b28765173f4728b8f7555fe9331e35</uuid>
+                    <name>ECO-Status</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.dect.ecostatus</key>
+                    <delay>0</delay>
+                    <description>Frequency used for DECT connections.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const info = JSON.parse(value).data.dectFBox.info;
+for (var key in info) {
+    if (info[key].name.includes('Eco Status')) return (info[key].value == 'an' ? 1 : 0);
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.dect</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5f1ff240d68649458f745f51bd69443c</uuid>
+                    <name>Frequency</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.dect.frequency</key>
+                    <delay>0</delay>
+                    <value_type>FLOAT</value_type>
+                    <units>!MHz</units>
+                    <description>Frequency used for DECT connections.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>const info = JSON.parse(value).data.dectFBox.info;
+for (var key in info) {
+    if (info[key].name.includes('Tx-Freq')) return parseFloat(info[key].value);
+}</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.dect</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>5305d07fcb3441b1aca49e820749a747</uuid>
                     <name>Network devices</name>
                     <type>SCRIPT</type>
@@ -1062,6 +1145,263 @@ for (var i = temp.length-1; i &gt;= 0; i--) {
                     </preprocessing>
                     <master_item>
                         <key>fritz.lua.statistic</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c8c545a7bdfd427da79c76833d11a399</uuid>
+                    <name>USB</name>
+                    <type>SCRIPT</type>
+                    <key>fritz.lua.usb</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>const params = JSON.parse(value);
+
+// Encode string as UTF-16LE
+function encodeStr(text) {
+var byteArray = new Uint8Array(text.length * 2);
+    for (var i = 0; i &lt; text.length; i++) {
+        byteArray[i*2] = text.charCodeAt(i) // &amp; 0xff;
+        byteArray[i*2+1] = text.charCodeAt(i) &gt;&gt; 8 // &amp; 0xff;
+    }
+    return byteArray;
+}
+
+// Get challenge from Fritz!Box
+var url = 'http://' + params.ip + '/login_sid.lua';
+const request = new HttpRequest();
+var response = request.get(url);
+
+// Calculate request parameters
+const challenge = XML.query(response, '/SessionInfo/Challenge/text()');
+const challengeStr = encodeStr(challenge + '-' + params.password);
+const challengeResponse = challenge + '-' + md5(challengeStr);
+
+// Get session id from Fritz!Box
+url = url + '?username=' + params.username + '&amp;response=' + challengeResponse;
+response = request.get(url);
+const sid = XML.query(response, '/SessionInfo/SID/text()');
+
+if (sid != '0000000000000000') {
+    // Retrieve data excerpt from Fritz!Box
+    url = 'http://' + params.ip + '/data.lua';
+    const body = 'sid=' + sid + '&amp;page=' + params.page;
+    request.addHeader('Content-Type: application/x-www-form-urlencoded');
+    request.addHeader('Content-Length: ' + body.length.toString());
+    response = request.post(url, body);
+
+    // Terminate Session as the number of active sessions is limited
+    // and a session expires after 20 minutes
+    url = 'http://' + params.ip + '/login_sid.lua?logout=1&amp;sid=' + sid;
+    request.get(url);
+
+    // Return the response
+    return (response);
+} else {
+    return 'Invalid SID';
+}</params>
+                    <description>Info about USB devices for further processing.</description>
+                    <timeout>30s</timeout>
+                    <parameters>
+                        <parameter>
+                            <name>ip</name>
+                            <value>{HOST.IP}</value>
+                        </parameter>
+                        <parameter>
+                            <name>page</name>
+                            <value>usbOv</value>
+                        </parameter>
+                        <parameter>
+                            <name>password</name>
+                            <value>{$FRITZ.PASSWORD}</value>
+                        </parameter>
+                        <parameter>
+                            <name>username</name>
+                            <value>{$FRITZ.USERNAME}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5bd0d9605e3a48acbfff1a016362efc5</uuid>
+                    <name>Devices</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.devices</key>
+                    <delay>0</delay>
+                    <description>Number of USB devices connectedto the box.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.devices[?(@.isEjectable=='true')].length()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>0552ae329c3642e28d6b289c84d7eb73</uuid>
+                    <name>FTP server</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.ftpserver</key>
+                    <delay>0</delay>
+                    <description>Is FTP server enabled for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.isFTPServerEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>8cfe700c2588407fa33509d0d1f9eba3</uuid>
+                    <name>FTP storage</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.ftpstorage</key>
+                    <delay>0</delay>
+                    <description>Is FTP storage enabled for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.isFTPStorageEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>ac4228bdc25a42fdbadd1b78d9602040</uuid>
+                    <name>NAS</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.nas</key>
+                    <delay>0</delay>
+                    <description>Is NAS enabled for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.isNASEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>0277e4c41920444ead106354a6470fe7</uuid>
+                    <name>SMB</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.smb</key>
+                    <delay>0</delay>
+                    <description>Is SMB enabled for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.isSMBEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>12a01374427249298cd52191b04ce0f8</uuid>
+                    <name>Storage</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.storage</key>
+                    <delay>0</delay>
+                    <units>B</units>
+                    <description>Sum of USB storage of the box (including internal storage).</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data..partitions..totalStorageInBytes.sum()</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>check</tag>
+                            <value>lua</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c3fdad1e3a684b5e879a7cb1a551e2f1</uuid>
+                    <name>Webdav</name>
+                    <type>DEPENDENT</type>
+                    <key>fritz.lua.usb.webdav</key>
+                    <delay>0</delay>
+                    <description>Is Webdav enabled for USB devices.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.usbOverview.isWebdavEnabled</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>fritz.lua.usb</key>
                     </master_item>
                     <tags>
                         <tag>
