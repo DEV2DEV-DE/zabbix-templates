@@ -1240,7 +1240,7 @@ if (sid != '0000000000000000') {
                     <type>DEPENDENT</type>
                     <key>fritz.lua.usb.devices</key>
                     <delay>0</delay>
-                    <description>Number of USB devices connectedto the box.</description>
+                    <description>Number of USB devices connected to the box.</description>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
