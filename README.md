@@ -1,6 +1,10 @@
 # zabbix-templates
 Templates for Zabbix (currently 6.4)
 
+![](https://img.shields.io/static/v1?label=&message=AVM%20Fritz!Box&color=maroon)
+![](https://img.shields.io/static/v1?label=&message=Lupussec%20XT&color=darkorange)
+![](https://img.shields.io/static/v1?label=&message=Homematic%20CCU&color=navy)
+
 ${\textsf{\color{orange}Contributions welcome!}}$
 
 ## ${\textsf{\color{blue}Fritz!Box UPnP}}$
