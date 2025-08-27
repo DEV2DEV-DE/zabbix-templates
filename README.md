@@ -5,6 +5,7 @@ Templates for Zabbix (currently 6.4)
 ![](https://img.shields.io/static/v1?label=&message=Lupussec%20XT&color=darkorange)
 ![](https://img.shields.io/static/v1?label=&message=Homematic%20CCU&color=navy)
 ![](https://img.shields.io/static/v1?label=&message=Tasmota&color=dodgerblue)
+![](https://img.shields.io/static/v1?label=&message=Unraid&color=orange)
 
 ${\textsf{\color{orange}Contributions welcome!}}$
 
@@ -46,3 +47,12 @@ Tested with CCU3.
 ## ${\textsf{\color{blue}Tasmota}}$
 
 Tested with smart plug Nous A1T.
+
+## ${\textsf{\color{blue}Unraid API}}$
+
+> [!Important]
+> You need to install the plugin ``Unraid Connect`` on your server.
+
+Set macro ``{$UNRAID_API_KEY}`` and enter a valid security token.
+
+Tested with Unraid 7.1.4.
