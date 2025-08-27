@@ -13,6 +13,10 @@
             <template>Unraid by GraphQL</template>
             <name>Unraid by GraphQL</name>
             <description>Template for the Unraid-API by DEV2DEV</description>
+            <vendor>
+                <name>DEV2DEV</name>
+                <version>0.3</version>
+            </vendor>
             <groups>
                 <group>
                     <name>Templates/Operating systems</name>
@@ -98,6 +102,7 @@ return resp;</params>
                     <name>Free</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.capacity.free</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -132,6 +137,7 @@ return resp;</params>
                     <name>Total</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.capacity.total</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -166,6 +172,7 @@ return resp;</params>
                     <name>Used</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.capacity.used</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -200,6 +207,7 @@ return resp;</params>
                     <name>Free</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.disks.free</key>
+                    <history>90d</history>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -227,6 +235,7 @@ return resp;</params>
                     <name>Total</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.disks.total</key>
+                    <history>90d</history>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -254,6 +263,7 @@ return resp;</params>
                     <name>Used</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.disks.used</key>
+                    <history>90d</history>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -281,6 +291,7 @@ return resp;</params>
                     <name>State</name>
                     <type>DEPENDENT</type>
                     <key>unraid.array.state</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -297,6 +308,79 @@ return resp;</params>
                         <tag>
                             <tag>component</tag>
                             <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4a7e31f40fde4d1a916826f63807d318</uuid>
+                    <name>Disks</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.disks</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  disks {';
+query += '    device';
+query += '    type';
+query += '    name';
+query += '    vendor';
+query += '    size';
+query += '    firmwareRevision';
+query += '    serialNum';
+query += '    interfaceType';
+query += '    smartStatus';
+query += '    temperature';
+query += '    partitions {';
+query += '      name';
+query += '      fsType';
+query += '      size';
+query += '    }';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about cpu &amp; memory from Unraid server.</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>var obj = JSON.parse(value);
+for (var i = 0; i &lt; obj.data.disks.length; i++) {
+    obj.data.disks[i]['idx'] = i;
+    obj.data.disks[i]['device'] = obj.data.disks[i]['device'].replace('/dev/', '');
+}
+return JSON.stringify(obj);</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>disks</value>
                         </tag>
                         <tag>
                             <tag>template</tag>
@@ -370,6 +454,7 @@ return resp;</params>
                     <name>Baseboard</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.baseboard</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -398,6 +483,7 @@ return resp;</params>
                     <name>MemMax</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.baseboard.memmax</key>
+                    <history>90d</history>
                     <trends>0</trends>
                     <units>B</units>
                     <preprocessing>
@@ -427,6 +513,7 @@ return resp;</params>
                     <name>MemSlots</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.baseboard.memslots</key>
+                    <history>90d</history>
                     <trends>0</trends>
                     <preprocessing>
                         <step>
@@ -455,6 +542,7 @@ return resp;</params>
                     <name>Info.CPU</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.cpu</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -483,6 +571,7 @@ return resp;</params>
                     <name>Brand</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.cpu.brand</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -511,6 +600,7 @@ return resp;</params>
                     <name>Cores</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.cpu.cores</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -539,6 +629,7 @@ return resp;</params>
                     <name>Manufacturer</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.cpu.manufacturer</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -567,6 +658,7 @@ return resp;</params>
                     <name>Threads</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.cpu.threads</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -595,6 +687,7 @@ return resp;</params>
                     <name>Info.OS</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -623,6 +716,7 @@ return resp;</params>
                     <name>Distro</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.distro</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <inventory_link>OS</inventory_link>
                     <preprocessing>
@@ -652,6 +746,7 @@ return resp;</params>
                     <name>Platform</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.platform</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <preprocessing>
                         <step>
@@ -680,6 +775,7 @@ return resp;</params>
                     <name>Release</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.release</key>
+                    <history>90d</history>
                     <value_type>TEXT</value_type>
                     <inventory_link>OS_FULL</inventory_link>
                     <preprocessing>
@@ -709,6 +805,7 @@ return resp;</params>
                     <name>Uptime</name>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.uptime</key>
+                    <history>90d</history>
                     <trends>0</trends>
                     <units>unixtime</units>
                     <preprocessing>
@@ -841,6 +938,7 @@ return resp;</params>
                     <name>Utilization</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.cpu.percentTotal</key>
+                    <history>90d</history>
                     <value_type>FLOAT</value_type>
                     <units>%</units>
                     <preprocessing>
@@ -899,6 +997,7 @@ return resp;</params>
                     <name>Active</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.active</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -927,6 +1026,7 @@ return resp;</params>
                     <name>Available</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.available</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -955,6 +1055,7 @@ return resp;</params>
                     <name>Buffer</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.buffcache</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -983,6 +1084,7 @@ return resp;</params>
                     <name>Free</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.free</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1011,6 +1113,7 @@ return resp;</params>
                     <name>Utilization</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.percentTotal</key>
+                    <history>90d</history>
                     <value_type>FLOAT</value_type>
                     <units>%</units>
                     <preprocessing>
@@ -1040,6 +1143,7 @@ return resp;</params>
                     <name>SwapFree</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.swapFree</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1068,6 +1172,7 @@ return resp;</params>
                     <name>SwapTotal</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.swapTotal</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1096,6 +1201,7 @@ return resp;</params>
                     <name>SwapUsed</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.swapUsed</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1124,6 +1230,7 @@ return resp;</params>
                     <name>Total</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.total</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1152,6 +1259,7 @@ return resp;</params>
                     <name>Used</name>
                     <type>DEPENDENT</type>
                     <key>unraid.metrics.memory.used</key>
+                    <history>90d</history>
                     <units>B</units>
                     <preprocessing>
                         <step>
@@ -1180,6 +1288,7 @@ return resp;</params>
                     <name>Used memory</name>
                     <type>CALCULATED</type>
                     <key>unraid.metrics.memory.usedmem</key>
+                    <history>90d</history>
                     <units>B</units>
                     <params>last(//unraid.metrics.memory.total) - last(//unraid.metrics.memory.available)</params>
                     <tags>
@@ -1194,6 +1303,121 @@ return resp;</params>
                     </tags>
                 </item>
             </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <uuid>7cf23d2771d941129176c626037942bd</uuid>
+                    <name>Disk dicovery</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.discovery.disks</key>
+                    <item_prototypes>
+                        <item_prototype>
+                            <uuid>8acfafecd0794d798c23829984934586</uuid>
+                            <name>Disk {#DEVICE}: Name</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.name]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].name</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>a7e6a8718caa437eb3a1128d69f457c2</uuid>
+                            <name>Disk {#DEVICE}: Type</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.type]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].type</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>1c4e3782bee04c479751ff7daf354e98</uuid>
+                            <name>Disk {#DEVICE}: Vendor</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.vendor]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].vendor</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>unraid.disks</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#DEVICE}</lld_macro>
+                            <path>$.device</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#IDX}</lld_macro>
+                            <path>$.idx</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.disks</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                </discovery_rule>
+            </discovery_rules>
             <macros>
                 <macro>
                     <macro>{$UNRAID_API_KEY}</macro>
