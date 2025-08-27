@@ -340,11 +340,11 @@ query += '    serialNum';
 query += '    interfaceType';
 query += '    smartStatus';
 query += '    temperature';
-query += '    partitions {';
-query += '      name';
-query += '      fsType';
-query += '      size';
-query += '    }';
+// query += '    partitions {';
+// query += '      name';
+// query += '      fsType';
+// query += '      size';
+// query += '    }';
 query += '  }';
 query += '}';
 
@@ -1311,6 +1311,62 @@ return resp;</params>
                     <key>unraid.discovery.disks</key>
                     <item_prototypes>
                         <item_prototype>
+                            <uuid>395bb2126e18400cb8a783485725ae82</uuid>
+                            <name>Disk {#DEVICE}: Firmware Revision</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.firmwareRevision]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].firmwareRevision</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>48d9c77df4134cb599e3b66b457b0c67</uuid>
+                            <name>Disk {#DEVICE}: Interface Type</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.interfaceType]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].interfaceType</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
                             <uuid>8acfafecd0794d798c23829984934586</uuid>
                             <name>Disk {#DEVICE}: Name</name>
                             <type>DEPENDENT</type>
@@ -1321,6 +1377,125 @@ return resp;</params>
                                     <type>JSONPATH</type>
                                     <parameters>
                                         <parameter>$.data.disks[{#IDX}].name</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>ef8e080b785f492fb0074dadbedb0120</uuid>
+                            <name>Disk {#DEVICE}: Serial Number</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.serialNum]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].serialNum</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>1c4e3782bee04c479751ff7daf354e98</uuid>
+                            <name>Disk {#DEVICE}: Size</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.size]</key>
+                            <units>B</units>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].size</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>ba0b46b6874b40ebb062523cbf135dad</uuid>
+                            <name>Disk {#DEVICE}: Smart Status</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.smartStatus]</key>
+                            <value_type>TEXT</value_type>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].smartStatus</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>a6865ff009fa415bad3ef4f0d59b02f8</uuid>
+                            <name>Disk {#DEVICE}: Temperature</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.temperature]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>Â°C</units>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].temperature</parameter>
+                                    </parameters>
+                                </step>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <parameters>
+                                        <parameter>return value == 'null' ? -1 : value;</parameter>
                                     </parameters>
                                 </step>
                             </preprocessing>
@@ -1367,7 +1542,7 @@ return resp;</params>
                             </tags>
                         </item_prototype>
                         <item_prototype>
-                            <uuid>1c4e3782bee04c479751ff7daf354e98</uuid>
+                            <uuid>a31a1c0583b147739bfa3643c19ae7a4</uuid>
                             <name>Disk {#DEVICE}: Vendor</name>
                             <type>DEPENDENT</type>
                             <key>unraid.disk.[{#DEVICE}.vendor]</key>
