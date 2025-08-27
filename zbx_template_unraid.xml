@@ -20,6 +20,291 @@
             </groups>
             <items>
                 <item>
+                    <uuid>724134a3f4d840f781ff3cd546333b0d</uuid>
+                    <name>Array</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.array</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  array {';
+query += '    disks {';
+query += '      comment';
+query += '      device';
+query += '      format';
+query += '      fsFree';
+query += '      fsSize';
+query += '      fsType';
+query += '      fsUsed';
+query += '      idx';
+query += '      name';
+query += '      rotational';
+query += '      status';
+query += '      temp';
+query += '      transport';
+query += '      type';
+query += '    }';
+query += '    capacity {';
+query += '      kilobytes {';
+query += '        free';
+query += '        total';
+query += '        used';
+query += '      }';
+query += '      disks {';
+query += '        free';
+query += '        total';
+query += '        used';
+query += '      }';
+query += '    }';
+query += '    state';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about array devices from Unraid server.</description>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e496abd061d5496a9cd88844743df685</uuid>
+                    <name>Free</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.capacity.free</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.kilobytes.free</parameter>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <parameters>
+                                <parameter>1024</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c621646232044a8e8fd0c5c62569d99a</uuid>
+                    <name>Total</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.capacity.total</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.kilobytes.total</parameter>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <parameters>
+                                <parameter>1024</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>a730342c4ed54cd88b6169456ffdb3b2</uuid>
+                    <name>Used</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.capacity.used</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.kilobytes.used</parameter>
+                            </parameters>
+                        </step>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <parameters>
+                                <parameter>1024</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>87cfb1b270194e73be85500c98926091</uuid>
+                    <name>Free</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.disks.free</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.disks.free</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>1fe024c64c39468caed4103cbb0b3e4c</uuid>
+                    <name>Total</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.disks.total</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.disks.total</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>638ea05046d141d5a0ceea77a648dc5a</uuid>
+                    <name>Used</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.disks.used</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.capacity.disks.used</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f4b390ddbb11400eb69412410c706ed6</uuid>
+                    <name>State</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.array.state</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.array.state</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.array</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>array</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
                     <uuid>de07e23991034a3ea0bb9c4fa7d8f2bb</uuid>
                     <name>Info</name>
                     <type>SCRIPT</type>
@@ -339,6 +624,7 @@ return resp;</params>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.distro</key>
                     <value_type>TEXT</value_type>
+                    <inventory_link>OS</inventory_link>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -395,6 +681,7 @@ return resp;</params>
                     <type>DEPENDENT</type>
                     <key>unraid.info.os.release</key>
                     <value_type>TEXT</value_type>
+                    <inventory_link>OS_FULL</inventory_link>
                     <preprocessing>
                         <step>
                             <type>JSONPATH</type>
@@ -445,6 +732,460 @@ return resp;</params>
                         <tag>
                             <tag>component</tag>
                             <value>os</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5d810a59b10f4f2d97cc5364f56aa8c9</uuid>
+                    <name>Metrics</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.metrics</key>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  metrics {';
+query += '    cpu {';
+query += '      percentTotal';
+query += '      cpus {';
+query += '        percentTotal';
+query += '        percentUser';
+query += '        percentSystem';
+query += '        percentNice';
+query += '        percentIdle';
+query += '        percentIrq';
+query += '      }';
+query += '    }';
+query += '    memory {';
+query += '      total';
+query += '      used';
+query += '      free';
+query += '      available';
+query += '      active';
+query += '      buffcache';
+query += '      percentTotal';
+query += '      swapTotal';
+query += '      swapUsed';
+query += '      swapFree';
+query += '      percentSwapTotal';
+query += '    }';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about cpu &amp; memory from Unraid server.</description>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>metrics</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4b57b08ad6c444558db09a6f4aa27b7b</uuid>
+                    <name>CPU</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.cpu</key>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.metrics.cpu</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>cpu</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>ee175c166a3443509de3e6950a62f3f5</uuid>
+                    <name>Utilization</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.cpu.percentTotal</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.percentTotal</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.cpu</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>cpu</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e585bd1b543145fabaa21efaaf9e853f</uuid>
+                    <name>Memory</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory</key>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.metrics.memory</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>a111d34d59de420fa5b7d58cf6ca1a5f</uuid>
+                    <name>Active</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.active</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.active</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>188975dff064473394e6f6f088dbfcc1</uuid>
+                    <name>Available</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.available</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.available</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4699b6f7906b4551a226e1c9b41dbede</uuid>
+                    <name>Buffer</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.buffcache</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.buffcache</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>43336841ee2147e885acf1685bbc46c6</uuid>
+                    <name>Free</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.free</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.free</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>2b150c4dcc0646e283bc4d0c6122b13f</uuid>
+                    <name>Utilization</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.percentTotal</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.percentTotal</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>bb3ddcf80ee644e9a65c5b29c721ef15</uuid>
+                    <name>SwapFree</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.swapFree</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.swapFree</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>0c1bc7f9de784abbb7ee6cfb22ec1d19</uuid>
+                    <name>SwapTotal</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.swapTotal</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.swapTotal</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>7507c64817e246aba966df2814918c4c</uuid>
+                    <name>SwapUsed</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.swapUsed</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.swapUsed</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>08fee51590ef4e798b01505a06126d88</uuid>
+                    <name>Total</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.total</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.total</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b2506462c6fa46d5a5bf84efaaf60827</uuid>
+                    <name>Used</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.metrics.memory.used</key>
+                    <units>B</units>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.used</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.metrics.memory</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>098f2cf8ba36471d9efcf3f3d1f836a1</uuid>
+                    <name>Used memory</name>
+                    <type>CALCULATED</type>
+                    <key>unraid.metrics.memory.usedmem</key>
+                    <units>B</units>
+                    <params>last(//unraid.metrics.memory.total) - last(//unraid.metrics.memory.available)</params>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>memory</value>
                         </tag>
                         <tag>
                             <tag>template</tag>
