@@ -340,11 +340,11 @@ query += '    serialNum';
 query += '    interfaceType';
 query += '    smartStatus';
 query += '    temperature';
-// query += '    partitions {';
-// query += '      name';
-// query += '      fsType';
-// query += '      size';
-// query += '    }';
+query += '    partitions {';
+query += '      name';
+query += '      fsType';
+query += '      size';
+query += '    }';
 query += '  }';
 query += '}';
 
@@ -361,8 +361,10 @@ return resp;</params>
                                 <parameter>var obj = JSON.parse(value);
 for (var i = 0; i &lt; obj.data.disks.length; i++) {
     obj.data.disks[i]['idx'] = i;
+    obj.data.disks[i]['numPartitions'] = obj.data.disks[i]['partitions'].length;
     obj.data.disks[i]['device'] = obj.data.disks[i]['device'].replace('/dev/', '');
 }
+obj.data.numDisks = obj.data.disks.length;
 return JSON.stringify(obj);</parameter>
                             </parameters>
                         </step>
@@ -377,6 +379,33 @@ return JSON.stringify(obj);</parameter>
                             <value>{HOST.CONN}</value>
                         </parameter>
                     </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>disks</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>fca3759339374ba182b789c51b68cf86</uuid>
+                    <name>Count</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.disks.count</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.numDisks</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.disks</key>
+                    </master_item>
                     <tags>
                         <tag>
                             <tag>component</tag>
@@ -1302,6 +1331,502 @@ return resp;</params>
                         </tag>
                     </tags>
                 </item>
+                <item>
+                    <uuid>ce42db1051ac4a689247f06c9b1e92ab</uuid>
+                    <name>Notifications</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.notifications</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  notifications {';
+query += '    overview {';
+query += '      unread {';
+query += '        info';
+query += '        warning';
+query += '        alert';
+query += '        total';
+query += '      }';
+query += '    }';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about notifications from Unraid server.</description>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>notifications</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f870f69381ea479a92a0f5ad5facb361</uuid>
+                    <name>Alert</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.notifications.alert</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.notifications.overview.unread.alert</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.notifications</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>notifications</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>29ec649835744a5f954e49787fd79fa7</uuid>
+                    <name>Info</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.notifications.info</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.notifications.overview.unread.info</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.notifications</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>notifications</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e391593418b949738c934da44d7931bb</uuid>
+                    <name>Total</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.notifications.total</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.notifications.overview.unread.total</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.notifications</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>notifications</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>5e4dd5b69c994919af27c4399075980f</uuid>
+                    <name>Warning</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.notifications.warning</key>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.notifications.overview.unread.warning</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.notifications</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>notifications</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>a42b4a363812414dba5e50f6a6b6a3e8</uuid>
+                    <name>Server</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.server</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  server {';
+query += '    guid';
+query += '    apikey';
+query += '    name';
+query += '    status';
+query += '    wanip';
+query += '    lanip';
+query += '    localurl';
+query += '    remoteurl';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about the server from Unraid server.</description>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e730a6e4145543268e492405baba7b95</uuid>
+                    <name>API-Key</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.apikey</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.apikey</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>b7ebc8e096d04b4dab4a76c2fd11c61f</uuid>
+                    <name>GUID</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.guid</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.guid</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c6c640c916f54e69bd66059364cb8ac8</uuid>
+                    <name>LAN IP</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.lanip</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.lanip</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>c4a021e0246a4b8eb0aea91a66c5c9c1</uuid>
+                    <name>Local URL</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.localurl</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.localurl</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>1efb6e97bc7d437d8b420507535fadc2</uuid>
+                    <name>Name</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.name</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.name</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>6269b9887fa54d71a0210497b739c373</uuid>
+                    <name>Remote URL</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.remoteurl</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.remoteurl</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>e30425f432bd4f939c4aa74bcc6a3526</uuid>
+                    <name>Status</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.status</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.status</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>61425e934237469ca387b341ef1fd4d2</uuid>
+                    <name>WAN IP</name>
+                    <type>DEPENDENT</type>
+                    <key>unraid.server.wanip</key>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <parameters>
+                                <parameter>$.data.server.wanip</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>unraid.server</key>
+                    </master_item>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>server</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>49966940badf49cd844747a8e8f205d9</uuid>
+                    <name>Shares</name>
+                    <type>SCRIPT</type>
+                    <key>unraid.shares</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <value_type>TEXT</value_type>
+                    <params>params = JSON.parse(value);
+req = new HttpRequest();
+
+req.addHeader('Content-Type: application/json');
+req.addHeader('x-api-key: ' + params.APIKey);
+var query = 'query {';
+query += '  shares {';
+query += '    name';
+query += '    free';
+query += '    used';
+query += '    size';
+query += '    cache';
+query += '    nameOrig';
+query += '    comment';
+query += '    allocator';
+query += '    splitLevel';
+query += '    floor';
+query += '    cow';
+query += '    color';
+query += '    luksStatus';
+query += '  }';
+query += '}';
+
+const obj = {query: query, variables: {}};
+
+resp = req.post('http://' + params.connect + '/graphql', JSON.stringify(obj));
+
+return resp;</params>
+                    <description>Retrieves informations about the shares from Unraid server.</description>
+                    <parameters>
+                        <parameter>
+                            <name>APIKey</name>
+                            <value>{$UNRAID_API_KEY}</value>
+                        </parameter>
+                        <parameter>
+                            <name>connect</name>
+                            <value>{HOST.CONN}</value>
+                        </parameter>
+                    </parameters>
+                    <tags>
+                        <tag>
+                            <tag>component</tag>
+                            <value>shares</value>
+                        </tag>
+                        <tag>
+                            <tag>template</tag>
+                            <value>unraid</value>
+                        </tag>
+                    </tags>
+                </item>
             </items>
             <discovery_rules>
                 <discovery_rule>
@@ -1377,6 +1902,33 @@ return resp;</params>
                                     <type>JSONPATH</type>
                                     <parameters>
                                         <parameter>$.data.disks[{#IDX}].name</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>unraid.disks</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>component</tag>
+                                    <value>disks</value>
+                                </tag>
+                                <tag>
+                                    <tag>template</tag>
+                                    <value>unraid</value>
+                                </tag>
+                            </tags>
+                        </item_prototype>
+                        <item_prototype>
+                            <uuid>d256464663bc4a1280673cd97974f69d</uuid>
+                            <name>Disk {#DEVICE}: Partitions</name>
+                            <type>DEPENDENT</type>
+                            <key>unraid.disk.[{#DEVICE}.partitions]</key>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$.data.disks[{#IDX}].numPartitions</parameter>
                                     </parameters>
                                 </step>
                             </preprocessing>
@@ -1495,7 +2047,7 @@ return resp;</params>
                                 <step>
                                     <type>JAVASCRIPT</type>
                                     <parameters>
-                                        <parameter>return value == 'null' ? -1 : value;</parameter>
+                                        <parameter>return value == 'null' ? 0 : parseFloat(value);</parameter>
                                     </parameters>
                                 </step>
                             </preprocessing>
@@ -1512,6 +2064,24 @@ return resp;</params>
                                     <value>unraid</value>
                                 </tag>
                             </tags>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <uuid>b8f2478e05bc4383b4100de5881d8055</uuid>
+                                    <expression>last(/Unraid by GraphQL/unraid.disk.[{#DEVICE}.temperature])&gt;{$UNRAID_DRIVE_TEMP_CRITICAL}</expression>
+                                    <name>Temperature drive {#DEVICE} critical</name>
+                                    <opdata>Critical temperature detected on drive {#DEVICE}</opdata>
+                                    <priority>HIGH</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <uuid>598403fdbd88410ba3ab990561046513</uuid>
+                                    <expression>last(/Unraid by GraphQL/unraid.disk.[{#DEVICE}.temperature])&gt;{$UNRAID_DRIVE_TEMP_WARN}</expression>
+                                    <name>Temperature drive {#DEVICE} high</name>
+                                    <opdata>High temperature detected on drive {#DEVICE}</opdata>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
                         </item_prototype>
                         <item_prototype>
                             <uuid>a7e6a8718caa437eb3a1128d69f457c2</uuid>
@@ -1597,6 +2167,14 @@ return resp;</params>
                 <macro>
                     <macro>{$UNRAID_API_KEY}</macro>
                     <description>API-Key to access the server</description>
+                </macro>
+                <macro>
+                    <macro>{$UNRAID_DRIVE_TEMP_CRITICAL}</macro>
+                    <description>Alarm level for drive temperature</description>
+                </macro>
+                <macro>
+                    <macro>{$UNRAID_DRIVE_TEMP_WARN}</macro>
+                    <description>Warning level for drive temperature</description>
                 </macro>
             </macros>
         </template>
